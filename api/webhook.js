@@ -5,7 +5,7 @@
 // são conferidos de novo direto na API da FlevoPay com a nossa chave. Responde sempre 200, para a
 // FlevoPay não ficar reenviando a notificação.
 const {
-  STEPS, etapaDaReferencia, flevo, transacaoPorReferencia, urlBase, paginaDaEtapa, clienteDaTransacao,
+  STEPS, ID_TRANSACAO, valorConfere, etapaDaReferencia, buscarTransacao, transacaoPorReferencia, urlBase, paginaDaEtapa, clienteDaTransacao,
   eventoDeCompra, enviarEventoTikTok, enviarPedidoUtmify, trackingDaTransacao,
 } = require("./_lib");
 
@@ -21,10 +21,7 @@ async function consultar(idTransacao, referencia) {
     try {
       t = null;
       if (idTransacao) {
-        const r = await flevo("/query?action=get_transaction&id=" + encodeURIComponent(idTransacao), {
-          signal: AbortSignal.timeout(3000),
-        });
-        if (r.ok && r.dados && r.dados.status) t = r.dados;
+        t = await buscarTransacao(idTransacao, { signal: AbortSignal.timeout(3000) });
       }
       if (!t && referencia) t = await transacaoPorReferencia(referencia);
     } catch (e) {
@@ -41,15 +38,19 @@ module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
 
   const corpo = req.body && typeof req.body === "object" ? req.body : {};
-  const bruto = String(corpo.transaction_id || "");
-  const idTransacao = /^\w{1,40}$/.test(bruto) ? bruto : "";
-  const referencia = String(corpo.external_id || corpo.store_reference || "");
+  // A Velani manda { event, data: { id, externalId, ... } }; só a venda paga interessa (os outros
+  // eventos nem precisam de consulta, e a Velani limita a 5 requisições por segundo).
+  if (corpo.source === "velani-gateway" && corpo.event !== "transaction.paid") return res.status(200).json({ received: true });
+  const dado = corpo.data && typeof corpo.data === "object" ? corpo.data : {};
+  const bruto = String(corpo.transaction_id || dado.id || "");
+  const idTransacao = ID_TRANSACAO.test(bruto) ? bruto : "";
+  const referencia = String(corpo.external_id || corpo.store_reference || dado.externalId || "");
 
   try {
     if (idTransacao || referencia) {
       const t = await consultar(idTransacao, referencia);
       const etapa = t ? etapaDaReferencia(t.external_id) : "";
-      if (t && etapa && t.status === "approved" && Number(t.amount) === STEPS[etapa].amount) {
+      if (t && etapa && t.status === "approved" && valorConfere(t, STEPS[etapa].amount)) {
         // Daqui a compra vai com os dados do cliente (e-mail, telefone, CPF). O clique e o navegador
         // chegam ao TikTok pelo "Pix gerado" e pelo pixel da página, que dispara este mesmo event_id.
         const base = urlBase(req);

@@ -13,7 +13,8 @@ process.emitWarning = function (aviso, ...resto) {
 
 const FLEVO_BASE = "https://pagamento-processador.org.ua/api/v1";
 const TIKTOK_EVENTS = "https://business-api.tiktok.com/open_api/v1.3/event/track/";
-const UTMIFY_ORDERS = "https://api.utmify.com.br/api-credentials/orders";
+const VELANI_BASE = "https://api.velanipagamentos.com.br/api/v1/api-gateway";
+const UTMIFY_ORDERS ="https://api.utmify.com.br/api-credentials/orders";
 
 // Preço (em centavos), nome e próxima etapa de cada passo do funil.
 // `next` só é usado pelo up8, up9 e up10 (o servidor devolve o link de redirecionamento).
@@ -108,6 +109,124 @@ async function flevo(caminho, opcoes = {}) {
   return { ok: r.ok, status: r.status, dados };
 }
 
+// ---------------------------------------------------------------------------------------------
+//  Gateway de Pix: FlevoPay (padrão) ou Velani, escolhido pela variável PIX_GATEWAY ("velani").
+//  Os endpoints só falam com as funções abaixo; a transação sai sempre no formato da FlevoPay
+//  ({ id, external_id, status, amount, customer_data }), com status "approved" quando paga.
+// ---------------------------------------------------------------------------------------------
+
+function gateway() {
+  return env("PIX_GATEWAY").toLowerCase() === "velani" ? "velani" : "flevopay";
+}
+
+// Id de transação aceito nas rotas (a Velani usa UUID, com hífen).
+const ID_TRANSACAO = /^[\w-]{1,64}$/;
+
+async function velani(caminho, opcoes = {}) {
+  const chave = env("VELANI_SECRET");
+  if (!chave) throw new Error("VELANI_SECRET não configurada");
+  const r = await fetch(VELANI_BASE + caminho, {
+    ...opcoes,
+    headers: { "x-api-key": chave, "Content-Type": "application/json", ...(opcoes.headers || {}) },
+  });
+  let dados = null;
+  try { dados = await r.json(); } catch (e) { /* resposta sem JSON */ }
+  return { ok: r.ok, status: r.status, dados };
+}
+
+const STATUS_VELANI = { paid: "approved", pending: "pending", processing: "pending" };
+
+function transacaoDaVelani(d) {
+  if (!d || !d.id) return null;
+  const c = d.customer || {};
+  const doc = c.document && typeof c.document === "object" ? c.document.number : c.document;
+  return {
+    id: String(d.id),
+    external_id: d.externalId || "",
+    status: STATUS_VELANI[d.status] || d.status,   // failed, expired e refunded seguem com o nome da Velani
+    amount: d.amount,
+    customer_data: {
+      customer: { name: d.customerName || c.name, email: d.customerEmail || c.email, phone: c.phone, document: doc },
+      tracking: d.tracking || {},
+    },
+  };
+}
+
+// A Velani devolve o valor em centavos; aceita também em reais, por garantia.
+function valorConfere(t, centavos) {
+  const v = Number(t && t.amount);
+  return v === centavos || Math.round(v * 100) === centavos;
+}
+
+// Cria o Pix. Devolve { pixCode, id } ou null se o gateway recusar.
+async function criarPix({ reference, step, cliente, tracking, postbackUrl }) {
+  const cfg = STEPS[step];
+  const t0 = Date.now();
+  let resultado = null;
+  let ruim = null;
+
+  if (gateway() === "velani") {
+    const r = await velani("/v1/transactions", {
+      method: "POST",
+      // Sem resposta em 15 s, desiste: uma criação pendurada deixaria este CPF preso em `recentes` (pix.js).
+      signal: AbortSignal.timeout(15000),
+      headers: { "x-idempotency-key": reference },
+      body: JSON.stringify({
+        amount: cfg.amount,
+        paymentMethod: "pix",
+        description: cfg.name,
+        externalId: reference,
+        ...(postbackUrl ? { postbackUrl } : {}),
+        customer: {
+          name: cliente.nome, email: cliente.email, phone: cliente.telefone,
+          document: { type: "cpf", number: cliente.documento },
+        },
+        tracking,
+      }),
+    });
+    const d = (r.dados && r.dados.data) || {};
+    if (r.ok && d.pixQrCode && d.id) resultado = { pixCode: d.pixQrCode, id: String(d.id) };
+    else ruim = ["Velani recusou a criação:", r.status, JSON.stringify(r.dados)];
+  } else {
+    const r = await flevo("/transaction", {
+      method: "POST",
+      signal: AbortSignal.timeout(15000),
+      body: JSON.stringify({
+        amount: cfg.amount,
+        description: cfg.name,
+        reference,
+        ...(postbackUrl ? { postback_url: postbackUrl } : {}),
+        source: "api_externa",
+        customer: { name: cliente.nome, email: cliente.email, document: cliente.documento, phone: cliente.telefone },
+        tracking,
+      }),
+    });
+    const d = r.dados || {};
+    if (r.ok && d.status === "success" && d.qr_code && d.transaction_id) {
+      resultado = { pixCode: d.qr_code, id: String(d.transaction_id) };
+    } else {
+      ruim = ["FlevoPay recusou a criação:", r.status, JSON.stringify(d)];
+    }
+  }
+
+  if (!resultado) {
+    console.error(...ruim);
+    return null;
+  }
+  console.log("[pix] criada", JSON.stringify({ gateway: gateway(), reference, id: resultado.id, ms: Date.now() - t0 }));
+  return resultado;
+}
+
+// Consulta a transação pelo id do gateway. Devolve null se não achar ou se a consulta falhar.
+async function buscarTransacao(id, opcoes = {}) {
+  if (gateway() === "velani") {
+    const r = await velani("/v1/transactions/" + encodeURIComponent(id), opcoes);
+    return r.ok && r.dados ? transacaoDaVelani(r.dados.data) : null;
+  }
+  const r = await flevo("/query?action=get_transaction&id=" + encodeURIComponent(id), opcoes);
+  return r.ok && r.dados && r.dados.status ? r.dados : null;
+}
+
 // Endereço público do site (SITE_URL, ou o host da requisição), usado no postback_url.
 function urlBase(req) {
   const fixo = env("SITE_URL").replace(/\/+$/, "");
@@ -125,6 +244,14 @@ function etapaDaReferencia(reference) {
 // Busca a transação pela referência, direto na FlevoPay. Usada pelo webhook quando ele não recebe o id.
 // Uma referência pode ter mais de uma linha lá (cobranças duplicadas antigas): vale a aprovada.
 async function transacaoPorReferencia(reference) {
+  if (gateway() === "velani") {
+    // A Velani não filtra por externalId: varre a última página (100 mais recentes) e consulta a achada.
+    const r = await velani("/v1/transactions?page=1&limit=100");
+    const lista = r.dados && (Array.isArray(r.dados.data) ? r.dados.data : (r.dados.data && r.dados.data.items));
+    if (!r.ok || !Array.isArray(lista)) throw new Error("Velani respondeu " + r.status + " na consulta por referência");
+    const achada = lista.find((t) => t && t.externalId === reference);
+    return achada ? buscarTransacao(String(achada.id)) : null;
+  }
   const r = await flevo("/query?action=list_transactions&external_id=" + encodeURIComponent(reference));
   if (!r.ok || !Array.isArray(r.dados)) throw new Error("FlevoPay respondeu " + r.status + " na consulta por referência");
   const mesmas = r.dados.filter((t) => t && t.external_id === reference);
@@ -350,7 +477,7 @@ async function enviarPedidoUtmify({ status, reference, step, cliente, tracking, 
 
 module.exports = {
   STEPS, env, soDigitos, cpfValido, telefoneValido, reais, lerCookie, queryDaPagina, lerCorpo, flevo,
-  urlBase, etapaDaReferencia, transacaoPorReferencia, clienteDaTransacao, trackingDaTransacao,
+  ID_TRANSACAO, valorConfere, criarPix, buscarTransacao, urlBase, etapaDaReferencia, transacaoPorReferencia, clienteDaTransacao, trackingDaTransacao,
   eventoDeCompra, paginaDaEtapa, contextoDoNavegador, identidadeTikTok, eventoParaOPixel,
   enviarEventoTikTok, enviarPedidoUtmify,
 };

@@ -2,7 +2,7 @@
 // Cria a cobrança Pix na FlevoPay. O valor vem da tabela STEPS (_lib.js), nunca do navegador.
 const crypto = require("crypto");
 const {
-  STEPS, soDigitos, cpfValido, telefoneValido, reais, queryDaPagina, lerCorpo, flevo, urlBase,
+  STEPS, soDigitos, cpfValido, telefoneValido, reais, queryDaPagina, lerCorpo, criarPix, urlBase,
   contextoDoNavegador, eventoParaOPixel, enviarEventoTikTok, enviarPedidoUtmify,
 } = require("./_lib");
 
@@ -59,30 +59,11 @@ module.exports = async function handler(req, res) {
   const pixGerado = { evento: "InitiateCheckout", eventId: "ic_" + reference, step, cliente: { email, telefone, documento: cpf } };
 
   async function criarCobranca() {
-    const t0 = Date.now();
-    const r = await flevo("/transaction", {
-      method: "POST",
-      // Sem resposta em 15 s, desiste: uma criação pendurada deixaria este CPF preso em `recentes`.
-      signal: AbortSignal.timeout(15000),
-      body: JSON.stringify({
-        amount: cfg.amount,
-        description: cfg.name,
-        reference,
-        ...(postbackUrl ? { postback_url: postbackUrl } : {}),
-        source: "api_externa",
-        customer: { name: nome, email, document: cpf, phone: telefone },
-        tracking,
-      }),
+    const pix = await criarPix({
+      reference, step, tracking, postbackUrl,
+      cliente: { nome, email, documento: cpf, telefone },
     });
-
-    const d = r.dados || {};
-    if (!r.ok || d.status !== "success" || !d.qr_code || !d.transaction_id) {
-      console.error("FlevoPay recusou a criação:", r.status, JSON.stringify(d));
-      return null;
-    }
-    console.log("[pix] criada", JSON.stringify({
-      reference, id: String(d.transaction_id), ms: Date.now() - t0,
-    }));
+    if (!pix) return null;
 
     // Prazo curto: se o TikTok demorar, o cliente não fica esperando o QR Code por causa da medição.
     // A Utmify recebe o pedido como "aguardando pagamento"; o "pago" vem do webhook / status.
@@ -97,8 +78,8 @@ module.exports = async function handler(req, res) {
     ]);
 
     return {
-      pix_code: d.qr_code,
-      payment_code: String(d.transaction_id),
+      pix_code: pix.pixCode,
+      payment_code: pix.id,
       price_label: reais(cfg.amount),
       tiktok: eventoParaOPixel(pixGerado),   // a página dispara o mesmo evento pelo pixel
     };

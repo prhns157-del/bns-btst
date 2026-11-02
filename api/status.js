@@ -2,7 +2,7 @@
 // Consulta a FlevoPay. Quando o Pix aparece como aprovado, dispara a compra na Events API do TikTok
 // com o clique e o navegador desta requisição, e devolve o mesmo evento para a página disparar pelo pixel.
 const {
-  STEPS, queryDaPagina, flevo, clienteDaTransacao, contextoDoNavegador, eventoDeCompra, eventoParaOPixel,
+  STEPS, ID_TRANSACAO, valorConfere, queryDaPagina, buscarTransacao, clienteDaTransacao, contextoDoNavegador, eventoDeCompra, eventoParaOPixel,
   enviarEventoTikTok, enviarPedidoUtmify, trackingDaTransacao,
 } = require("./_lib");
 
@@ -13,15 +13,14 @@ module.exports = async function handler(req, res) {
   const step = String(req.query.f || "");
   const cfg = STEPS[step];
   const codigo = String(req.query.code || "");
-  if (!cfg || !/^\w{1,40}$/.test(codigo)) return res.status(400).json({ error: "Parâmetros inválidos." });
+  if (!cfg || !ID_TRANSACAO.test(codigo)) return res.status(400).json({ error: "Parâmetros inválidos." });
 
   try {
-    const r = await flevo("/query?action=get_transaction&id=" + encodeURIComponent(codigo));
-    const t = r.dados;
-    if (!r.ok || !t || !t.status) return res.status(200).json({ status: "pending" });
+    const t = await buscarTransacao(codigo);
+    if (!t) return res.status(200).json({ status: "pending" });
 
     // Só aceita transações criadas por esta etapa e com o valor esperado.
-    if (!String(t.external_id || "").startsWith(step + "-") || Number(t.amount) !== cfg.amount) {
+    if (!String(t.external_id || "").startsWith(step + "-") || !valorConfere(t, cfg.amount)) {
       return res.status(404).json({ error: "Transação não encontrada." });
     }
 
