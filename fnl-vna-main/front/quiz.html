@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="/params.js"></script>
+<script src="/api/tt.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pesquisa TikTok</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:hsl(0,0%,97%);--card:hsl(0,0%,100%);--fg:hsl(0,0%,8%);--primary:hsl(346,97%,55%);--muted:hsl(220,14%,92%);--muted-fg:hsl(220,10%,45%);--border:hsl(220,13%,89%);--reward:hsl(142,71%,45%)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--fg);min-height:100vh;display:flex;flex-direction:column;align-items:center;-webkit-font-smoothing:antialiased}
+@keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+@keyframes slideOut{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(-20px)}}
+@keyframes modal-in{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
+@keyframes toast-in{from{transform:translateX(130%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes toast-out{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(130%)}}
+@keyframes pulse-balance{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+
+/* Header */
+.header{width:100%;max-width:520px;display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
+.logo-row{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.logo-row svg{display:block;flex-shrink:0}
+.h-right{display:flex;align-items:center;gap:8px}
+.saldo-badge{background:hsl(346 97% 55%/.12);border-radius:9999px;padding:7px 14px;display:flex;align-items:center;gap:4px}
+.saldo-prefix{font-size:10px;font-weight:700;color:var(--primary)}
+.saldo-val{font-size:14px;font-weight:800;color:var(--fg);font-variant-numeric:tabular-nums}
+
+/* Sacar btn — só aparece no final */
+.sacar-btn{background:var(--primary);color:#fff;border:none;border-radius:9999px;padding:8px 18px;font-size:12px;font-weight:800;font-family:'Poppins',sans-serif;cursor:pointer;letter-spacing:.04em;transition:transform .15s;display:none}
+.sacar-btn.visible{display:block}
+.sacar-btn:active{transform:scale(.95)}
+
+/* Progress bar */
+.prog-bar{width:100%;max-width:520px;height:4px;background:var(--muted)}
+.prog-fill{height:100%;background:var(--primary);transition:width .4s ease;border-radius:0 9999px 9999px 0}
+
+/* Card */
+.card{width:100%;max-width:520px;background:var(--card);flex:1;display:flex;flex-direction:column;min-height:calc(100vh - 57px)}
+@media(min-width:560px){.card{border-radius:0 0 1.5rem 1.5rem;box-shadow:0 8px 48px rgb(0 0 0/.06)}}
+
+.q-meta{padding:16px 20px 4px;display:flex;justify-content:space-between;align-items:center}
+.q-label{font-size:11px;font-weight:700;color:var(--muted-fg);text-transform:uppercase;letter-spacing:.06em}
+.dots{display:flex;gap:4px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted);transition:all .3s}
+.dot.done{background:var(--primary)}
+.dot.active{background:var(--primary);transform:scale(1.3);box-shadow:0 0 0 3px hsl(346 97% 55%/.2)}
+
+.q-body{flex:1;display:flex;flex-direction:column;padding:8px 20px 20px;animation:slideIn .25s ease}
+.q-body.out{animation:slideOut .2s ease forwards}
+.q-text{font-size:20px;font-weight:800;text-align:left;line-height:1.35;margin:14px 0 18px}
+
+.options{display:flex;flex-direction:column;gap:10px;margin-bottom:20px}
+.opt{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-radius:1rem;border:2px solid var(--border);cursor:pointer;transition:all .18s;background:var(--card);text-align:left;width:100%;font-family:'Poppins',sans-serif}
+.opt:hover{border-color:hsl(346 97% 55%/.3);background:hsl(346 97% 55%/.04)}
+.opt.sel{border-color:var(--primary);background:hsl(346 97% 55%/.06);box-shadow:0 4px 16px hsl(346 97% 55%/.1)}
+.opt-l{display:flex;align-items:center;gap:12px}
+.opt-emoji{font-size:22px}
+.opt-text{font-size:14px;font-weight:500;color:var(--fg)}
+.opt.sel .opt-text{color:var(--fg);font-weight:600}
+.radio{width:20px;height:20px;border-radius:50%;border:2px solid hsl(220 10% 45%/.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .18s}
+.opt.sel .radio{background:var(--primary);border-color:var(--primary)}
+.radio-dot{width:7px;height:7px;border-radius:50%;background:#fff;opacity:0;transition:opacity .18s}
+.opt.sel .radio-dot{opacity:1}
+
+.continue-btn{width:100%;background:var(--muted);color:var(--muted-fg);border:none;border-radius:1rem;padding:16px;font-size:15px;font-weight:700;font-family:'Poppins',sans-serif;cursor:not-allowed;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;margin-top:auto}
+.continue-btn.active{background:var(--primary);color:#fff;cursor:pointer;box-shadow:0 20px 25px -5px hsl(346 97% 55%/.25)}
+.continue-btn.active:active{transform:scale(.97)}
+
+/* Bonus line — só aparece perto do fim */
+.bonus-line{text-align:center;font-size:13px;font-weight:600;color:var(--reward);margin-top:14px;display:none;align-items:center;justify-content:center;gap:6px}
+.bonus-line.show{display:flex}
+
+.footer-terms{padding:12px 20px;text-align:center;font-size:10px;color:var(--muted-fg);border-top:1px solid hsl(220 13% 89%/.5);background:hsl(220 14% 92%/.1)}
+.footer-terms a{color:var(--primary)}
+
+/* Modals */
+.overlay{position:fixed;inset:0;background:hsl(0 0% 8%/.4);backdrop-filter:blur(4px);z-index:100;display:none;align-items:center;justify-content:center}
+.overlay.on{display:flex}
+.modal{background:var(--card);border-radius:1.5rem;padding:32px 24px;width:85%;max-width:380px;text-align:center;animation:modal-in .3s ease;border:1px solid hsl(220 13% 89%/.2)}
+.m-icon{width:64px;height:64px;background:hsl(142 71% 45%/.1);border-radius:1.25rem;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:32px}
+.m-title{font-size:17px;font-weight:800;color:var(--reward);margin-bottom:4px}
+.m-sub{font-size:13px;color:var(--muted-fg);margin-bottom:4px}
+.m-amount{font-size:52px;font-weight:900;color:var(--reward);margin:12px 0;font-variant-numeric:tabular-nums}
+.m-total{font-size:13px;color:var(--muted-fg);margin-bottom:6px}
+.m-total strong{color:var(--fg)}
+.m-note{font-size:13px;color:var(--muted-fg);margin-bottom:24px;line-height:1.5}
+.m-btn{width:100%;background:var(--fg);color:var(--card);border:none;border-radius:.875rem;padding:16px;font-size:15px;font-weight:800;font-family:'Poppins',sans-serif;cursor:pointer;transition:transform .15s}
+.m-btn:active{transform:scale(.97)}
+
+/* Final modal */
+.final-ov{position:fixed;inset:0;background:hsl(0 0% 8%/.5);backdrop-filter:blur(6px);z-index:200;display:none;align-items:center;justify-content:center}
+.final-ov.on{display:flex}
+.final-m{background:linear-gradient(135deg,var(--primary),hsl(346 97% 40%));border-radius:1.5rem;padding:36px 28px;width:90%;max-width:360px;text-align:center;animation:modal-in .3s ease}
+.f-trophy{width:80px;height:80px;background:hsl(0 0% 100%/.15);border-radius:1.5rem;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:40px}
+.f-label{font-size:16px;font-weight:700;color:hsl(346 97% 55%/.8);margin-bottom:4px}
+.f-title{font-size:20px;font-weight:900;color:#fff;margin-bottom:8px}
+.f-amount{font-size:56px;font-weight:900;color:#fff;margin:16px 0;font-variant-numeric:tabular-nums}
+.f-note{font-size:14px;color:hsl(0 0% 100%/.7);margin-bottom:28px}
+.f-btn{width:100%;background:#fff;color:var(--fg);border:none;border-radius:1rem;padding:18px;font-size:16px;font-weight:900;font-family:'Poppins',sans-serif;cursor:pointer;transition:transform .15s}
+.f-btn:active{transform:scale(.97)}
+
+/* Block modal */
+.block-ov{position:fixed;inset:0;background:hsl(0 0% 8%/.5);backdrop-filter:blur(4px);z-index:300;display:none;align-items:center;justify-content:center}
+.block-ov.on{display:flex}
+.block-m{background:var(--card);border-radius:1.5rem;width:88%;max-width:340px;overflow:hidden;animation:modal-in .3s ease}
+.block-hd{background:linear-gradient(90deg,var(--primary),hsl(346 97% 40%));color:#fff;padding:16px 20px;font-weight:800;display:flex;justify-content:space-between;align-items:center;font-size:14px}
+.block-x{width:28px;height:28px;background:hsl(0 0% 100%/.2);border:none;border-radius:50%;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:'Poppins',sans-serif}
+.block-bd{padding:24px;text-align:center}
+.block-bd p{font-size:15px;color:hsl(220 10% 45%/.9);line-height:1.55;margin-bottom:16px}
+.block-ok{background:var(--primary);color:#fff;border:none;border-radius:.875rem;padding:12px 24px;font-size:14px;font-weight:700;font-family:'Poppins',sans-serif;cursor:pointer}
+
+/* Toast */
+.toast-wrap{position:fixed;top:16px;right:16px;z-index:50;max-width:280px;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.notif{background:var(--card);border:1px solid var(--border);border-radius:1rem;padding:12px;box-shadow:0 10px 15px -3px rgb(0 0 0/.1);animation:toast-in .3s ease;pointer-events:auto}
+.notif.out{animation:toast-out .3s ease forwards}
+.notif-in{display:flex;align-items:flex-start;gap:10px}
+.notif-ic{width:32px;height:32px;background:hsl(142 71% 45%/.1);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.notif-title{font-size:11px;font-weight:800;color:var(--reward)}
+.notif-text{font-size:10px;color:var(--muted-fg);margin-top:2px;line-height:1.4}
+
+/* Balance pulse on reward */
+.pulse{animation:pulse-balance .4s ease}
+
+canvas#confetti{position:fixed;inset:0;pointer-events:none;z-index:999;display:none}
+/* Processing state */
+.continue-btn.processing{background:hsl(346 97% 55%/.7);color:#fff;cursor:not-allowed;pointer-events:none}
+.processing-dots{display:inline-flex;gap:3px;margin-left:6px}
+.processing-dots span{width:5px;height:5px;border-radius:50%;background:#fff;animation:dotpulse 1s ease-in-out infinite}
+.processing-dots span:nth-child(2){animation-delay:.2s}
+.processing-dots span:nth-child(3){animation-delay:.4s}
+@keyframes dotpulse{0%,80%,100%{opacity:.3;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo-row">
+    <svg xmlns="http://www.w3.org/2000/svg" width="102" height="30" viewBox="0 0 102 30" fill="none"><path d="M9.49351 21.3496L9.59191 21.6274C9.57631 21.5956 9.54031 21.4984 9.49351 21.3496ZM4.92397 19.3739C5.09676 17.8817 5.68356 17.0459 6.78934 16.1891C8.37152 15.0287 10.3479 15.6851 10.3479 15.6851V11.7905C10.8284 11.7782 11.309 11.8081 11.7843 11.8799V16.8905C11.7843 16.8905 9.80851 16.2341 8.22633 17.3945C7.12114 18.2513 6.53315 19.0877 6.36095 20.5798C6.35555 21.391 6.50135 22.4506 7.17274 23.3668C7.00674 23.278 6.83754 23.1768 6.66515 23.0632C5.18616 22.027 4.91677 20.473 4.92397 19.3739ZM19.9448 4.59063C18.8564 3.34625 18.4448 2.08986 18.296 1.20728H19.6652C19.6652 1.20728 19.3922 3.52145 21.3818 5.79722L21.4094 5.82782C20.8731 5.47589 20.3814 5.06049 19.9448 4.59063Z" fill="#EE1D52"/><path d="M26.5405 8.11923V13.029C26.5405 13.029 24.7933 12.9582 23.5003 12.6144C21.6949 12.1344 20.5346 11.3988 20.5346 11.3988C20.5346 11.3988 19.733 10.8732 19.6682 10.8372V20.9801C19.6682 21.5441 19.52 22.954 19.0682 24.1306C18.4784 25.669 17.5682 26.6788 17.4008 26.8846C17.4008 26.8846 16.2938 28.2502 14.3408 29.1694C12.5805 29.9986 11.0349 29.9776 10.5729 29.9986C10.5729 29.9986 7.90112 30.109 5.49695 28.4782C4.97685 28.1194 4.49153 27.7126 4.04736 27.2632L4.05936 27.2716C6.46413 28.9024 9.1353 28.792 9.1353 28.792C9.5979 28.771 11.1435 28.792 12.9033 27.9628C14.855 27.0436 15.9632 25.678 15.9632 25.678C16.1288 25.4722 17.0432 24.4624 17.6306 22.9234C18.0812 21.7475 18.2306 20.3375 18.2306 19.7729V9.63061C18.2954 9.66721 19.097 10.1928 19.097 10.1928C19.097 10.1928 20.2574 10.9296 22.0627 11.4084C23.3563 11.7516 25.1029 11.823 25.1029 11.823V7.97583C25.7005 8.11563 26.2099 8.15403 26.5405 8.11923Z" fill="#EE1D52"/><path d="M25.1035 7.97568V11.8222C25.1035 11.8222 23.3569 11.7508 22.0633 11.4076C20.2579 10.9276 19.0976 10.1921 19.0976 10.1921C19.0976 10.1921 18.296 9.66646 18.2312 9.62986V19.7703C18.2312 20.3349 18.083 21.7449 17.6312 22.9209C17.0414 24.4599 16.1312 25.4697 15.9638 25.6755C15.9638 25.6755 14.8568 27.041 12.9038 27.9602C11.1441 28.7894 9.59848 28.7684 9.13588 28.7894C9.13588 28.7894 6.46472 28.8998 4.05995 27.269L4.04795 27.2606C3.7942 27.004 3.55522 26.7332 3.33216 26.4495C2.56477 25.4727 2.09437 24.3189 1.97617 23.9895C1.97582 23.9881 1.97582 23.9867 1.97617 23.9853C1.78538 23.4123 1.38578 22.0383 1.44038 20.7069C1.53698 18.3574 2.32897 16.9162 2.53837 16.5544C3.09319 15.5696 3.81468 14.6885 4.67074 13.9504C5.42572 13.3129 6.28189 12.8059 7.20391 12.4504C7.77883 12.2115 8.37791 12.0355 8.99069 11.9254C9.4389 11.8453 9.89266 11.8002 10.3479 11.7904V15.6826C10.3479 15.6826 8.37149 15.0262 6.78931 16.1866C5.68353 17.0434 5.09673 17.8792 4.92394 19.3713C4.91674 20.4705 5.18613 22.0245 6.66392 23.0619C6.83591 23.1759 7.00511 23.2771 7.17151 23.3655C7.42987 23.7144 7.74386 24.0185 8.1009 24.2655C9.54448 25.2189 10.7541 25.2855 12.3008 24.6663C13.3334 24.2577 14.1068 23.3247 14.4734 22.2903C14.6996 21.6447 14.6966 20.9943 14.6966 20.3229V1.20776H18.2966C18.4454 2.09035 18.857 3.34674 19.9454 4.59112C20.382 5.06098 20.8737 5.47638 21.4099 5.82831C21.5683 5.99931 22.3783 6.84409 23.4181 7.36369C23.9545 7.63179 24.52 7.83715 25.1035 7.97568Z" fill="black"/><path d="M0.543457 22.7937V22.7973L0.632256 23.0499C0.622656 23.0205 0.589056 22.9311 0.543457 22.7937Z" fill="#69C9D0"/><path d="M7.20399 12.4504C6.28197 12.8059 5.4258 13.3129 4.67082 13.9504C3.8147 14.6903 3.09359 15.5732 2.53965 16.5598C2.33025 16.9198 1.53826 18.3628 1.44166 20.7123C1.38706 22.0437 1.78666 23.4177 1.97745 23.9907C2.09745 24.3213 2.56605 25.4751 3.33344 26.4549C3.5565 26.7386 3.79548 27.0094 4.04923 27.2661C3.23575 26.7035 2.51026 26.0233 1.89645 25.2477C1.13566 24.2799 0.666469 23.1375 0.544071 22.8003L0.541071 22.7931V22.7883C0.350273 22.2171 -0.0505217 20.8419 0.0052776 19.5088C0.101876 17.1592 0.893867 15.718 1.10326 15.3562C1.65705 14.3695 2.37818 13.4865 3.23444 12.7468C3.98926 12.1091 4.84547 11.6021 5.76761 11.2469C6.34253 11.0079 6.9416 10.8319 7.55438 10.7219C8.47772 10.5604 9.42083 10.5464 10.3485 10.6805V11.7905C9.89345 11.7988 9.43969 11.8425 8.99137 11.9213C8.37822 12.0326 7.77893 12.2101 7.20399 12.4504Z" fill="#69C9D0"/><path d="M18.296 1.20778H14.6961V20.3241C14.6961 20.9955 14.6991 21.6441 14.4729 22.2915C14.1093 23.3247 13.3359 24.2577 12.3051 24.6717C10.7577 25.2933 9.54815 25.2243 8.10517 24.2709C7.74813 24.0239 7.43415 23.7198 7.17578 23.3709C8.40517 24.0267 9.50555 24.0153 10.8687 23.4681C11.8935 23.0511 12.6735 22.1181 13.0335 21.0843C13.2603 20.4387 13.2573 19.7884 13.2573 19.1176V0H18.2282C18.2282 0 18.1718 0.475794 18.296 1.20778ZM25.1036 6.91252V7.9757C24.5199 7.83721 23.9542 7.63186 23.4176 7.36371C22.3778 6.84412 21.5678 5.99933 21.4094 5.82833C21.5931 5.94903 21.7838 6.05862 21.9806 6.15652C23.2448 6.78772 24.4868 6.97671 25.1036 6.91252Z" fill="#69C9D0"/><path d="M78.2959 16.8815C78.2958 17.1549 78.3362 17.4269 78.4159 17.6884C78.4204 17.707 78.426 17.7252 78.4327 17.743C78.6247 18.3618 79.0097 18.9029 79.5314 19.2871C80.0531 19.6714 80.684 19.8786 81.3319 19.8784V22.9504C79.8373 22.9504 78.7663 23.0026 77.1373 22.039C75.2774 20.9398 74.2322 18.9298 74.2322 16.8425C74.2322 14.6909 75.401 12.5339 77.3827 11.4953C78.8191 10.7417 79.9123 10.7363 81.3319 10.7363V13.8065C80.5267 13.8067 79.7546 14.1266 79.1853 14.6959C78.616 15.2652 78.2961 16.0373 78.2959 16.8425V16.8815Z" fill="#69C9D0"/><path d="M84.3912 16.8815C84.3916 17.1549 84.3512 17.4269 84.2712 17.6884C84.267 17.707 84.2614 17.7253 84.2544 17.743C84.0625 18.3619 83.6776 18.9031 83.1559 19.2874C82.6342 19.6716 82.0032 19.8788 81.3552 19.8784V22.9504C82.8504 22.9504 83.9208 23.0026 85.5498 22.039C87.4098 20.9398 88.4555 18.9298 88.4555 16.8425C88.4555 14.6909 87.2862 12.5339 85.305 11.4953C83.8686 10.7417 82.7748 10.7363 81.3552 10.7363V13.8065C82.1605 13.8065 82.9327 14.1263 83.5022 14.6957C84.0716 15.265 84.3916 16.0372 84.3918 16.8425L84.3912 16.8815Z" fill="#EE1D52"/><path d="M34.3369 7.95044H45.5814L44.5422 11.0446H41.6022V22.8849H37.9801V11.0446H34.3369V7.95044ZM64.1385 7.95044V11.0446H67.7817V22.8849H71.4015V11.0446H74.3414L75.383 7.95044H64.1385ZM48.0275 11.4766C48.3739 11.4766 48.7125 11.3739 49.0006 11.1814C49.2886 10.989 49.5131 10.7155 49.6456 10.3954C49.7782 10.0754 49.8128 9.72327 49.7453 9.38354C49.6777 9.04381 49.5109 8.73174 49.266 8.48681C49.021 8.24187 48.709 8.07507 48.3692 8.00749C48.0295 7.93991 47.6773 7.9746 47.3573 8.10716C47.0373 8.23971 46.7638 8.46419 46.5713 8.7522C46.3789 9.04022 46.2762 9.37883 46.2762 9.72522C46.2762 10.1897 46.4607 10.6352 46.7891 10.9636C47.1176 11.2921 47.5631 11.4766 48.0275 11.4766ZM46.2732 22.8849H49.8233V12.7144H46.2732V22.8849ZM62.593 11.389H58.4422L54.8645 14.9704V7.96184H51.3383L51.3263 22.8849H54.8879V18.9963L55.9972 17.9925L59.4532 22.8849H63.2602L58.2538 15.7299L62.593 11.389ZM96.6449 15.7299L100.986 11.389H96.8351L93.2574 14.9704V7.96184H89.7306L89.7192 22.8849H93.2808V18.9963L94.3926 17.9925L97.8491 22.8849H101.652L96.6449 15.7299ZM87.5191 16.8423C87.5191 20.2149 84.7483 22.9491 81.3301 22.9491C77.912 22.9491 75.1418 20.2149 75.1418 16.8423C75.1418 13.4698 77.9126 10.7356 81.3301 10.7356C84.7477 10.7356 87.5203 13.4704 87.5203 16.8423H87.5191ZM84.3661 16.8423C84.3661 16.2419 84.188 15.6549 83.8544 15.1556C83.5208 14.6564 83.0467 14.2673 82.492 14.0375C81.9372 13.8077 81.3268 13.7476 80.7379 13.8647C80.1489 13.9818 79.608 14.271 79.1834 14.6956C78.7588 15.1202 78.4697 15.6611 78.3525 16.25C78.2354 16.839 78.2955 17.4494 78.5253 18.0041C78.7551 18.5589 79.1442 19.033 79.6434 19.3666C80.1427 19.7002 80.7297 19.8783 81.3301 19.8783C82.1597 19.8783 82.9554 19.5496 83.5437 18.9614C84.132 18.3731 84.4607 17.5774 84.4607 16.7478L84.3661 16.8423Z" fill="black"/></svg>
+  </div>
+  <div class="h-right">
+    <div class="saldo-badge">
+      <span class="saldo-prefix">R$</span>
+      <span class="saldo-val" id="balance">0,00</span>
+    </div>
+    <button class="sacar-btn" id="sacar-btn" onclick="showBlock()">SACAR</button>
+  </div>
+</div>
+<div class="prog-bar"><div class="prog-fill" id="prog" style="width:0%"></div></div>
+
+<div class="card">
+  <div class="q-meta">
+    <span class="q-label" id="q-label">Pergunta 1 de 11</span>
+    <div class="dots" id="dots"></div>
+  </div>
+  <div class="q-body" id="q-body">
+    <h2 class="q-text" id="q-text"></h2>
+    <div class="options" id="options"></div>
+    <button class="continue-btn" id="cont-btn" onclick="confirmAnswer()">
+      Continuar
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
+    </button>
+    <div class="bonus-line" id="bonus-line">🎁 Bônus surpresa na última pergunta!</div>
+  </div>
+  <div class="footer-terms">
+    Ao participar das atividades de recompensa, você concorda com nossos
+    <a href="#">Termos</a> e <a href="#">Condições</a>.
+  </div>
+</div>
+
+<!-- Reward modal -->
+<div class="overlay" id="rew-ov">
+  <div class="modal">
+    <div class="m-icon">🎁</div>
+    <div class="m-title">Nova recompensa!</div>
+    <div class="m-sub">Você ganhou</div>
+    <div class="m-amount" id="rew-amt">R$0,00</div>
+    <div class="m-total">Saldo total: <strong id="rew-total">R$0,00</strong></div>
+    <div class="m-note" id="rew-note">Continue respondendo para aumentar seu saldo</div>
+    <button class="m-btn" id="rew-btn" onclick="closeReward()">Continuar recebendo</button>
+  </div>
+</div>
+
+<!-- Final modal -->
+<div class="final-ov" id="final-ov">
+  <div class="final-m">
+    <div class="f-trophy">🏆</div>
+    <div class="f-label">Parabéns! 🎉</div>
+    <div class="f-title">Você completou o quiz e ganhou</div>
+    <div class="f-amount" id="final-amt">R$0,00</div>
+    <div class="f-note">Obrigado por participar da nossa pesquisa!</div>
+    <button class="f-btn" onclick="goWithdraw()">Receber recompensa</button>
+  </div>
+</div>
+
+<!-- Block modal -->
+<div class="block-ov" id="block-ov">
+  <div class="block-m">
+    <div class="block-hd">
+      <span>⚠️ Atenção</span>
+      <button class="block-x" onclick="document.getElementById('block-ov').classList.remove('on')">×</button>
+    </div>
+    <div class="block-bd">
+      <p>Não é possível realizar o saque ainda. Complete todas as perguntas para liberar o saldo.</p>
+      <button class="block-ok" onclick="document.getElementById('block-ov').classList.remove('on')">Entendi, vou continuar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toast-wrap"></div>
+<canvas id="confetti"></canvas>
+
+<script>
+const Qs=[
+  {q:"Como você avalia sua experiência geral no TikTok?",opts:[["😍","Excelente"],["😊","Boa"],["😐","Regular"],["😒","Ruim"]]},
+  {q:"Qual é o seu formato de vídeo favorito no TikTok?",opts:[["🎥","Vídeo curto"],["📹","Vídeo médio"],["⏳","Vídeo longo"],["📺","Live"]]},
+  {q:"Como você descobre novos vídeos no TikTok?",opts:[["🎯",'Feed "Para você"'],["👤","Seguindo criadores"],["🔍","Através de hashtags"],["📜",'Feed "Seguindo"'],["💡","Recomendações"]]},
+  {q:"Quantas horas por dia você passa no TikTok?",opts:[["⏳","Menos de 1 hora"],["⏳","1 a 2 horas"],["⏳","2 a 4 horas"],["⏳","4 a 6 horas"],["⏳","Mais de 6 horas"]]},
+  {q:"O que te faz seguir um criador no TikTok?",opts:[["🎉","Conteúdo divertido"],["📚","Conteúdo educativo"],["🤝","Conexão pessoal"],["🔥","Participação em desafios"],["📅","Frequência de postagens"]]},
+  {q:"Qual tema de conteúdo você mais gosta no TikTok?",opts:[["😂","Comédia"],["💃","Dança"],["ℹ️","Tutoriais e dicas"],["📹","Vlogs diários"],["💄","Moda e beleza"]]},
+  {q:"Qual horário do dia você mais usa o TikTok?",opts:[["🌅","Manhã"],["🌞","Tarde"],["🌜","Noite"],["🌙","Madrugada"]]},
+  {q:"Qual seção do TikTok você mais acessa?",opts:[["🎯","Para Você"],["👥","Seguindo"],["📺","TikTok Live"],["🔍","Descobrir"],["➕","Outro"]]},
+  {q:"Com que frequência você comenta em vídeos do TikTok?",opts:[["🔄","Sempre"],["📆","Frequentemente"],["⏳","Às vezes"],["🌧️","Raramente"],["🚫","Nunca"]]},
+  {q:"Que tipo de interação você mais faz nos vídeos do TikTok?",opts:[["👍","Curtir"],["💬","Comentar"],["🔄","Compartilhar"],["📌","Salvar"],["🚫","Nenhuma"]]},
+  {q:"Qual é a sua faixa etária?",opts:[["🧑‍🎓","13-17 anos"],["🎉","18-24 anos"],["👩‍💼","25-34 anos"],["👵","35 anos ou mais"]]}
+];
+
+// Rewards somam ~868 no total
+const rewards=[74.5,82.3,76.15,81.4,71.85,84.6,78.25,83.1,77.9,80.45,78.25];
+
+// Checkpoints onde o modal aparece: após perguntas 3, 7 e 11 (índices 3, 7, 10)
+const rewardCheckpoints = new Set([3, 7, 10]);
+
+const names=["Ana Silva","Carlos Santos","Marina Oliveira","João Pereira","Fernanda Costa","Ricardo Almeida","Juliana Rodrigues","Pedro Souza","Camila Ferreira","Lucas Barbosa"];
+const saqAmt=[624.5,731.2,512.75,845.1,678.3,799.6,540.9,710.45];
+
+// Pega cidade da URL se veio da presell
+const urlParams = new URLSearchParams(window.location.search);
+const geoCity = urlParams.get('city') || '';
+const cities = geoCity
+  ? [geoCity]
+  : ["São Paulo","Rio de Janeiro","Belo Horizonte","Brasília","Salvador","Fortaleza","Curitiba","Recife","Porto Alegre","Manaus"];
+
+let curQ=0, sel=null, total=0, accumulatedSinceLastModal=0;
+
+function fmt(v){return'R$'+v.toFixed(2).replace('.',',')}
+
+function animVal(el,to,dur=800){
+  const s=performance.now();
+  (function f(n){
+    const t=Math.min((n-s)/dur,1),e=1-Math.pow(1-t,3);
+    el.textContent=fmt(e*to);
+    if(t<1)requestAnimationFrame(f);
+  })(s);
+}
+
+function animBalance(from,to){
+  const s=performance.now(),el=document.getElementById('balance');
+  (function f(n){
+    const t=Math.min((n-s)/800,1),e=1-Math.pow(1-t,3);
+    el.textContent=(from+(to-from)*e).toFixed(2).replace('.',',');
+    if(t<1)requestAnimationFrame(f);
+    else{
+      // Pulse animation on balance after update
+      el.classList.remove('pulse');
+      void el.offsetWidth;
+      el.classList.add('pulse');
+    }
+  })(s);
+}
+
+function initDots(){
+  const d=document.getElementById('dots');d.innerHTML='';
+  for(let i=0;i<Qs.length;i++){
+    const el=document.createElement('div');
+    el.className='dot'+(i<curQ?' done':i===curQ?' active':'');
+    d.appendChild(el);
+  }
+}
+
+function render(){
+  sel=null;
+  const q=Qs[curQ];
+  document.getElementById('q-label').textContent=`Pergunta ${curQ+1} de ${Qs.length}`;
+  document.getElementById('q-text').textContent=q.q;
+  document.getElementById('prog').style.width=(curQ/Qs.length*100)+'%';
+
+  const opts=document.getElementById('options');opts.innerHTML='';
+  q.opts.forEach(([em,txt],i)=>{
+    const b=document.createElement('button');b.className='opt';
+    b.innerHTML=`<div class="opt-l"><span class="opt-emoji">${em}</span><span class="opt-text">${txt}</span></div><div class="radio"><div class="radio-dot"></div></div>`;
+    b.onclick=()=>selectOpt(i);
+    opts.appendChild(b);
+  });
+
+  document.getElementById('cont-btn').classList.remove('active');
+
+  // Bonus line aparece nas últimas 3 perguntas
+  const bonusLine = document.getElementById('bonus-line');
+  if(curQ >= Qs.length - 3){
+    bonusLine.classList.add('show');
+  } else {
+    bonusLine.classList.remove('show');
+  }
+
+  // Botão SACAR aparece só depois de completar
+  initDots();
+}
+
+function selectOpt(i){
+  sel=i;
+  document.querySelectorAll('.opt').forEach((o,idx)=>o.classList.toggle('sel',idx===i));
+  document.getElementById('cont-btn').classList.add('active');
+}
+
+function confirmAnswer(){
+  if(sel===null)return;
+  // Micro-delay com estado de processamento
+  const btn = document.getElementById('cont-btn');
+  btn.classList.remove('active');
+  btn.classList.add('processing');
+  btn.innerHTML = 'Processando<div class="processing-dots"><span></span><span></span><span></span></div>';
+
+  setTimeout(()=>{
+    btn.classList.remove('processing');
+    btn.innerHTML = 'Continuar <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>';
+    _doConfirm();
+  }, 600);
+}
+
+function _doConfirm(){
+  const r=rewards[curQ];
+  const prev=total;
+  total+=r;
+  accumulatedSinceLastModal+=r;
+  curQ++;
+
+  // Atualiza balance animado
+  animBalance(prev,total);
+
+  // Mostra modal só nos checkpoints
+  if(rewardCheckpoints.has(curQ)){
+    const el=document.getElementById('rew-amt');
+    const totalEl=document.getElementById('rew-total');
+    const noteEl=document.getElementById('rew-note');
+    el.textContent='R$0,00';
+    totalEl.textContent=fmt(total);
+    noteEl.textContent = curQ < Qs.length
+      ? `Faltam apenas ${Qs.length - curQ} pergunta${Qs.length-curQ>1?'s':''} para liberar o saque!`
+      : 'Seu saldo está pronto para saque!';
+    // Muda copy do modal dependendo se é final ou não
+    const rewBtn = document.getElementById('rew-btn');
+    const rewIcon = document.querySelector('#rew-ov .m-icon');
+    const rewTitle = document.querySelector('#rew-ov .m-title');
+    if(curQ >= Qs.length) {
+      rewBtn.textContent = 'Ver meu saldo total 🏆';
+      if(rewIcon) rewIcon.textContent = '🏆';
+      if(rewTitle) { rewTitle.textContent = 'Quiz completo!'; rewTitle.style.color = 'var(--primary)'; }
+    } else {
+      rewBtn.textContent = 'Continuar recebendo';
+      if(rewIcon) rewIcon.textContent = '🎁';
+      if(rewTitle) { rewTitle.textContent = 'Nova recompensa!'; rewTitle.style.color = 'var(--reward)'; }
+    }
+    playCoinSound();
+    document.getElementById('rew-ov').classList.add('on');
+    animVal(el, accumulatedSinceLastModal);
+    accumulatedSinceLastModal=0;
+  } else if(curQ>=Qs.length){
+    // Última pergunta sem checkpoint — vai direto pro final
+    spawnConfetti();
+    animFinal();
+    return;
+  } else {
+    // Sem modal — avança direto
+    nextQuestion();
+    return;
+  }
+}
+
+function closeReward(){
+  document.getElementById('rew-ov').classList.remove('on');
+  if(curQ>=Qs.length){
+    animFinal();
+    return;
+  }
+  nextQuestion();
+}
+
+function nextQuestion(){
+  const body=document.getElementById('q-body');
+  body.classList.add('out');
+  setTimeout(()=>{body.classList.remove('out');render()},200);
+}
+
+function animFinal(){
+  document.getElementById('sacar-btn').classList.add('visible');
+  const el=document.getElementById('final-amt');
+  el.textContent='R$0,00';
+  document.getElementById('final-ov').classList.add('on');
+  animVal(el, total, 1500);
+  document.getElementById('prog').style.width='100%';
+  // Confetti depois do modal abrir
+  setTimeout(spawnConfetti, 400);
+}
+
+function showBlock(){document.getElementById('block-ov').classList.add('on')}
+
+function spawnConfetti(){
+  const cv=document.getElementById('confetti');cv.style.display='block';
+  cv.width=window.innerWidth;cv.height=window.innerHeight;
+  const ctx=cv.getContext('2d');
+  const cols=['#fe2c55','#ff6b00','#ffb700','#adff00','#00ff91','#00c3ff','#9100ff'];
+  const pts=Array.from({length:60},()=>({
+    x:Math.random()*cv.width,y:Math.random()*-cv.height,
+    w:6+Math.random()*6,h:4+Math.random()*4,
+    rot:Math.random()*360,rs:-6+Math.random()*12,
+    vx:-2+Math.random()*4,vy:2+Math.random()*3,
+    col:cols[Math.floor(Math.random()*cols.length)]
+  }));
+  (function draw(){
+    ctx.clearRect(0,0,cv.width,cv.height);
+    let a=false;
+    pts.forEach(p=>{
+      p.vy=Math.min(p.vy+.15,4);p.x+=p.vx;p.y+=p.vy;p.rot+=p.rs;
+      if(p.y<cv.height*1.2)a=true;
+      ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot*Math.PI/180);
+      ctx.globalAlpha=.85;ctx.fillStyle=p.col;
+      ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);ctx.restore();
+    });
+    if(a)requestAnimationFrame(draw);else cv.style.display='none';
+  })();
+}
+
+function showNotif(){
+  const n=names[Math.floor(Math.random()*names.length)];
+  const c=cities[Math.floor(Math.random()*cities.length)];
+  const a=saqAmt[Math.floor(Math.random()*saqAmt.length)];
+  const w=document.getElementById('toast-wrap');
+  const el=document.createElement('div');
+  el.className='notif';
+  el.innerHTML=`<div class="notif-in"><div class="notif-ic">✅</div><div><div class="notif-title">Saque Realizado!</div><div class="notif-text">${n} de ${c} sacou R$ ${a.toFixed(2).replace('.',',')}</div></div></div>`;
+  w.appendChild(el);
+  setTimeout(()=>{el.classList.add('out');setTimeout(()=>el.remove(),300)},4000);
+}
+
+
+// ── Som cash register ───────────────────────────────────────
+const _cashAudio = new Audio('./media/cashregister.mp3');
+_cashAudio.preload = 'auto';
+_cashAudio.volume = 0.6;
+
+function playCoinSound(){
+  try{
+    _cashAudio.currentTime = 0;
+    _cashAudio.play().catch(function(){});
+  } catch(e){}
+}
+
+// Notificações — primeira em 3s, depois 8–12s aleatório
+function goWithdraw(){
+  const dest = new URL('withdraw.html', window.location.href);
+  new URLSearchParams(window.location.search).forEach((v,k) => dest.searchParams.set(k,v));
+  dest.searchParams.set('total', total.toFixed(2));
+  dest.searchParams.set('last', rewards[rewards.length-1].toFixed(2));
+  window.location.href = dest.toString();
+}
+
+setTimeout(function scheduleNotif(){
+  showNotif();
+  setTimeout(scheduleNotif, 8000 + Math.random() * 4000);
+}, 3000);
+
+// Abandono — avisa sobre saldo perdido
+window.addEventListener('beforeunload', function(e){
+  if(total > 0 && curQ < Qs.length){
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
+
+render();
+</script>
+
+</body>
+</html>

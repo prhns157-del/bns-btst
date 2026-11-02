@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Escolha rápida</title>
+    <style>
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: #85868c;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            color: #111;
+            display: grid;
+            place-items: center
+        }
+
+        .card {
+            width: min(92%, 680px);
+            background: #fff;
+            border-radius: 28px;
+            padding: 42px 38px;
+            box-shadow: 0 18px 45px #0002
+        }
+
+        .icon {
+            width: 88px;
+            height: 88px;
+            border-radius: 50%;
+            background: #ffe8ef;
+            color: #f42d5c;
+            display: grid;
+            place-items: center;
+            font-size: 45px;
+            margin: 0 auto 24px
+        }
+
+        .eyebrow {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .08em
+        }
+
+        .title {
+            text-align: center;
+            font-size: 34px;
+            margin: 12px 0 10px
+        }
+
+        .sub {
+            text-align: center;
+            color: #666;
+            font-size: 18px;
+            line-height: 1.45;
+            margin: 0 0 24px
+        }
+
+        .question {
+            background: #e8fbfd;
+            border-radius: 14px;
+            padding: 20px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 18px
+        }
+
+        .animals {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px
+        }
+
+        .animal {
+            border: 2px solid transparent;
+            background: #fff;
+            border-radius: 18px;
+            padding: 18px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-size: 19px;
+            font-weight: 700;
+            color: #4b5560;
+            cursor: pointer;
+            box-shadow: 0 3px 12px #00000012;
+            transition: .15s
+        }
+
+        .animal:hover {
+            transform: translateY(-1px)
+        }
+
+        .animal.selected {
+            border-color: #ff2e5e;
+            background: #fff3f6;
+            box-shadow: 0 0 0 3px #ff2e5e22
+        }
+
+        .animal span:first-child {
+            font-size: 42px
+        }
+
+        .actions {
+            display: flex;
+            gap: 16px;
+            margin-top: 26px
+        }
+
+        .btn {
+            flex: 1;
+            border: 0;
+            border-radius: 13px;
+            padding: 17px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer
+        }
+
+        .primary {
+            background: #ff2e5e;
+            color: #fff
+        }
+
+        .primary:disabled {
+            opacity: .45;
+            cursor: not-allowed
+        }
+
+        .secondary {
+            background: #f4f4f4;
+            color: #666
+        }
+
+        .notice {
+            text-align: center;
+            color: #777;
+            font-size: 13px;
+            margin-top: 20px
+        }
+
+        .loading {
+            display: none;
+            text-align: center
+        }
+
+        .spinner {
+            width: 42px;
+            height: 42px;
+            border: 4px solid #ffd1dc;
+            border-top-color: #ff2e5e;
+            border-radius: 50%;
+            animation: spin .8s linear infinite;
+            margin: 0 auto 22px
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg)
+            }
+        }
+
+        @media(max-width:520px) {
+            .card {
+                padding: 32px 20px
+            }
+
+            .title {
+                font-size: 28px
+            }
+
+            .animal {
+                padding: 15px;
+                font-size: 16px
+            }
+
+            .animal span:first-child {
+                font-size: 34px
+            }
+
+            .actions {
+                gap: 10px
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="card" id="quiz">
+        <div class="icon">✓</div>
+        <div class="eyebrow">Escolha rápida</div>
+        <h1 class="title">Antes de continuar</h1>
+        <p class="sub">Escolha uma opção abaixo para seguir.</p>
+        <div class="question">Qual animal você escolheria?</div>
+        <div class="animals" role="radiogroup" aria-label="Escolha um animal"><button class="animal" type="button"
+                data-animal="Cachorro"><span>🐶</span><span>Cachorro</span></button><button class="animal" type="button"
+                data-animal="Gato"><span>🐱</span><span>Gato</span></button><button class="animal" type="button"
+                data-animal="Leão"><span>🦁</span><span>Leão</span></button><button class="animal" type="button"
+                data-animal="Panda"><span>🐼</span><span>Panda</span></button></div>
+        <div class="actions"><button class="btn primary" id="continue" disabled>Continuar</button><button
+                class="btn secondary" id="clear" type="button">Limpar</button></div>
+        <p class="notice">Sua escolha não será compartilhada.</p>
+    </main>
+    <main class="card loading" id="loading">
+        <div class="spinner"></div>
+        <h1 class="title">Preparando seu acesso</h1>
+        <p class="sub">Aguarde um instante enquanto carregamos o conteúdo.</p>
+    </main>
+    <script>const items = [...document.querySelectorAll('.animal')], go = document.getElementById('continue'), clear = document.getElementById('clear'); let selected = ''; items.forEach(item => item.addEventListener('click', () => { items.forEach(x => x.classList.remove('selected')); item.classList.add('selected'); selected = item.dataset.animal; go.disabled = false })); clear.addEventListener('click', () => { items.forEach(x => x.classList.remove('selected')); selected = ''; go.disabled = true }); go.addEventListener('click', () => { if (!selected) return; document.getElementById('quiz').style.display = 'none'; document.getElementById('loading').style.display = 'block'; setTimeout(() => { location.href = 'index.html' + location.search }, 700) });</script>
+</body>
+
+</html>

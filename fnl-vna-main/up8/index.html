@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<script src="/params.js"></script>
+<script src="/api/tt.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TikTok Premium - Bônus Oculto</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Figtree:wght@400;700;900&display=swap');
+        
+        body { 
+            font-family: 'Figtree', sans-serif; 
+            background-color: #000; 
+            color: white; 
+            margin: 0; 
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .animated-gradient {
+            background: linear-gradient(to right, #FE2C55 0%, #25F4EE 25%, #ffffff 50%, #25F4EE 75%, #FE2C55 100%);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: flowing 2s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes flowing {
+            to { background-position: 200% center; }
+        }
+
+        .card-error-highlight {
+            background: linear-gradient(135deg, rgba(254, 44, 85, 0.15) 0%, rgba(37, 244, 238, 0.15) 100%);
+            border: 2px solid #FE2C55;
+            box-shadow: 0 0 25px rgba(254, 44, 85, 0.4);
+            backdrop-filter: blur(15px);
+        }
+
+        .pulse-glow {
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 15px rgba(254, 44, 85, 0.3); }
+            50% { box-shadow: 0 0 35px rgba(37, 244, 238, 0.5); }
+        }
+
+        .btn-tiktok {
+            background-color: #FE2C55;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-tiktok:active { transform: scale(0.96); filter: brightness(0.9); }
+        
+        .logo-main {
+            filter: drop-shadow(0 0 15px rgba(255,255,255,0.3));
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <div class="w-full py-0 flex justify-center border-b border-white/5 bg-black/95 sticky top-0 z-50">
+        <img src="https://images.seeklogo.com/logo-png/37/2/tiktok-app-logo-png_seeklogo-375617.png" class="h-28 filter brightness-0 invert logo-main" alt="TikTok">
+    </div>
+
+    <div class="max-w-md mx-auto px-6 pt-10 pb-20 text-center">
+        
+        <h2 class="text-[#25F4EE] text-[12px] font-black uppercase tracking-[0.4em] mb-4">Notificação do Sistema</h2>
+        <h1 class="text-5xl font-black mb-10 leading-none tracking-tighter italic">
+            BÔNUS <span class="animated-gradient">EXTRA</span>
+        </h1>
+
+        <div class="card-error-highlight rounded-[2.5rem] p-8 mb-10 text-center relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-right from-[#FE2C55] to-[#25F4EE]"></div>
+            
+            <p class="text-[#FE2C55] text-xs font-black uppercase tracking-widest mb-4">⚠️ Ação Urgente Necessária</p>
+            
+            <h3 class="text-2xl font-black text-white leading-tight mb-4">
+                Devido ao erro no processamento do seu saque anterior...
+            </h3>
+            
+            <p class="text-gray-200 text-lg leading-relaxed italic">
+                O sistema desbloqueou uma <span class="text-[#25F4EE] font-black">compensação de bônus automática</span> para a sua conta.
+            </p>
+            
+            <div class="mt-6 pt-6 border-t border-white/10">
+                <p class="text-gray-400 text-sm">
+                    O saldo anterior de <span class="text-white font-bold">R$ 1.428,26</span> foi atualizado com o novo bônus de <span class="text-[#FE2C55] font-bold">R$ 123,56</span>.
+                </p>
+            </div>
+        </div>
+
+        <div class="relative mb-10">
+            <div class="relative bg-white rounded-[2.5rem] py-12 text-black shadow-2xl pulse-glow">
+                <p class="text-[11px] font-extrabold uppercase tracking-[0.2em] text-gray-400 mb-2">Novo Saldo Total para Saque</p>
+                
+                <div class="flex justify-center items-center">
+                    <span class="text-6xl font-[1000] tracking-tighter text-black">
+                        R$ 1.715,75
+                    </span>
+                </div>
+
+                <div class="flex justify-center items-center gap-2 mt-5">
+                    <span class="w-3 h-3 bg-[#FE2C55] rounded-full animate-pulse"></span>
+                    <span class="text-[11px] font-black text-[#FE2C55] uppercase tracking-widest">Liberado para Pix Agora</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white/5 border border-white/10 rounded-3xl p-6 mb-10">
+            <p class="text-gray-300 text-sm mb-2">
+                Taxa Única de Liberação: <span class="text-[#25F4EE] text-2xl font-black">R$ 19,46</span>
+            </p>
+            <p class="text-white/60 font-bold text-[10px] uppercase tracking-widest leading-tight">
+                *O valor da taxa é reembolsado no saldo total do saque
+            </p>
+        </div>
+
+        <a href="#" onclick="irParaCheckout(event)"  class="block w-full btn-tiktok text-white text-center py-7 rounded-full font-black text-2xl uppercase tracking-tighter shadow-[0_10px_40px_rgba(254,44,85,0.5)]">
+            RESGATAR MEU BÔNUS
+        </a>
+
+        <div class="mt-8 px-4">
+            <p class="text-gray-400 text-[13px] leading-relaxed italic">
+                <span class="text-[#FE2C55] font-bold">Aviso:</span> Caso opte por não resgatar esse bônus agora, seu saldo retornará ao valor padrão do sistema. 
+                <span class="text-white font-bold">Recomendamos fortemente o resgate imediato</span>, pois os ganhos financeiros desta compensação são superiores ao saque comum.
+            </p>
+        </div>
+
+        <div class="mt-16 pt-8 border-t border-white/5 opacity-40">
+            <p class="text-[9px] font-bold uppercase tracking-[0.4em]">Protocolo de Segurança: TK-5156-2026</p>
+            <p class="text-[9px] font-bold uppercase tracking-[0.4em] mt-1">TikTok Business Compliance</p>
+        </div>
+
+    </div>
+
+<script>
+function irParaCheckout(event) {
+  event.preventDefault();
+  var dest = new URL('checkout.html', window.location.href);
+  new URLSearchParams(window.location.search).forEach(function(v, k) { dest.searchParams.set(k, v); });
+  window.location.href = dest.toString();
+}
+</script>
+
+</body>
+</html>
