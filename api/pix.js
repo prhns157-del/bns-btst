@@ -1,5 +1,5 @@
 // POST /api/pix?f=<etapa>   (etapa: front, back, up1 ... up10)
-// Cria a cobrança Pix na Mangofy. O valor vem da tabela STEPS (_lib.js), nunca do navegador.
+// Cria a cobrança Pix no gateway (Velani ou Mangofy, ver _lib.js). O valor vem da tabela STEPS (_lib.js), nunca do navegador.
 const crypto = require("crypto");
 const {
   STEPS, soDigitos, cpfValido, telefoneValido, reais, queryDaPagina, lerCorpo, criarPix, urlBase,

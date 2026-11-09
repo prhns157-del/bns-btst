@@ -14,6 +14,7 @@ process.emitWarning = function (aviso, ...resto) {
 // A documentação da Mangofy (Postman) usa um host de exemplo; o endereço real da API vem em MANGOFY_BASE_URL.
 const MANGOFY_BASE_PADRAO = "https://app.mangofy.com.br";
 const TIKTOK_EVENTS = "https://business-api.tiktok.com/open_api/v1.3/event/track/";
+const VELANI_BASE = "https://api.velanipagamentos.com.br/api/v1/api-gateway";
 const UTMIFY_ORDERS ="https://api.utmify.com.br/api-credentials/orders";
 
 // Preço (em centavos), nome e próxima etapa de cada passo do funil.
@@ -98,14 +99,48 @@ async function lerCorpo(req) {
 }
 
 // ---------------------------------------------------------------------------------------------
-//  Gateway de Pix: Mangofy (POST /api/v1/payment, GET /api/v1/payment/{payment_code}).
+//  Gateway de Pix: Velani (padrão) ou Mangofy, escolhido pela variável PIX_GATEWAY ("mangofy").
 //  Os endpoints só falam com as funções abaixo; a transação sai sempre no formato
 //  ({ id, external_id, status, amount, customer_data }), com status "approved" quando paga.
-//  Credenciais: MANGOFY_API_KEY (header Authorization) e MANGOFY_STORE_CODE (header Store-Code).
+//  Velani: VELANI_SECRET. Mangofy: MANGOFY_API_KEY (header Authorization) e MANGOFY_STORE_CODE (Store-Code).
 // ---------------------------------------------------------------------------------------------
 
-// Id de transação aceito nas rotas (o payment_code da Mangofy).
+function gateway() {
+  return env("PIX_GATEWAY").toLowerCase() === "mangofy" ? "mangofy" : "velani";
+}
+
+// Id de transação aceito nas rotas (a Velani usa UUID, com hífen; a Mangofy, o payment_code).
 const ID_TRANSACAO = /^[\w-]{1,64}$/;
+
+async function velani(caminho, opcoes = {}) {
+  const chave = env("VELANI_SECRET");
+  if (!chave) throw new Error("VELANI_SECRET não configurada");
+  const r = await fetch(VELANI_BASE + caminho, {
+    ...opcoes,
+    headers: { "x-api-key": chave, "Content-Type": "application/json", ...(opcoes.headers || {}) },
+  });
+  let dados = null;
+  try { dados = await r.json(); } catch (e) { /* resposta sem JSON */ }
+  return { ok: r.ok, status: r.status, dados };
+}
+
+const STATUS_VELANI = { paid: "approved", pending: "pending", processing: "pending" };
+
+function transacaoDaVelani(d) {
+  if (!d || !d.id) return null;
+  const c = d.customer || {};
+  const doc = c.document && typeof c.document === "object" ? c.document.number : c.document;
+  return {
+    id: String(d.id),
+    external_id: d.externalId || "",
+    status: STATUS_VELANI[d.status] || d.status,   // failed, expired e refunded seguem com o nome da Velani
+    amount: d.amount,
+    customer_data: {
+      customer: { name: d.customerName || c.name, email: d.customerEmail || c.email, phone: c.phone, document: doc },
+      tracking: d.tracking || {},
+    },
+  };
+}
 
 async function mangofy(caminho, opcoes = {}) {
   const chave = env("MANGOFY_API_KEY");
@@ -154,8 +189,36 @@ function valorConfere(t, centavos) {
 async function criarPix({ reference, step, cliente, tracking, postbackUrl, ip }) {
   const cfg = STEPS[step];
   const t0 = Date.now();
-  const fone = soDigitos(cliente.telefone);
 
+  if (gateway() === "velani") {
+    const rv = await velani("/v1/transactions", {
+      method: "POST",
+      // Sem resposta em 15 s, desiste: uma criação pendurada deixaria este CPF preso em `recentes` (pix.js).
+      signal: AbortSignal.timeout(15000),
+      headers: { "x-idempotency-key": reference },
+      body: JSON.stringify({
+        amount: cfg.amount,
+        paymentMethod: "pix",
+        description: cfg.name,
+        externalId: reference,
+        ...(postbackUrl ? { postbackUrl } : {}),
+        customer: {
+          name: cliente.nome, email: cliente.email, phone: cliente.telefone,
+          document: { type: "cpf", number: cliente.documento },
+        },
+        tracking,
+      }),
+    });
+    const dv = (rv.dados && rv.dados.data) || {};
+    if (!rv.ok || !dv.pixQrCode || !dv.id) {
+      console.error("Velani recusou a criação:", rv.status, JSON.stringify(rv.dados));
+      return null;
+    }
+    console.log("[pix] criada", JSON.stringify({ gateway: "velani", reference, id: String(dv.id), ms: Date.now() - t0 }));
+    return { pixCode: dv.pixQrCode, id: String(dv.id) };
+  }
+
+  const fone = soDigitos(cliente.telefone);
   const r = await mangofy("/api/v1/payment", {
     method: "POST",
     // Sem resposta em 15 s, desiste: uma criação pendurada deixaria este CPF preso em `recentes` (pix.js).
@@ -196,6 +259,10 @@ async function criarPix({ reference, step, cliente, tracking, postbackUrl, ip })
 
 // Consulta a transação pelo payment_code. Devolve null se não achar ou se a consulta falhar.
 async function buscarTransacao(id, opcoes = {}) {
+  if (gateway() === "velani") {
+    const rv = await velani("/v1/transactions/" + encodeURIComponent(id), opcoes);
+    return rv.ok && rv.dados ? transacaoDaVelani(rv.dados.data) : null;
+  }
   const r = await mangofy("/api/v1/payment/" + encodeURIComponent(id), opcoes);
   if (!r.ok || !r.dados) return null;
   return transacaoDaMangofy(r.dados.data || r.dados.payment || r.dados);
@@ -215,13 +282,25 @@ function etapaDaReferencia(reference) {
   return Object.prototype.hasOwnProperty.call(STEPS, etapa) ? etapa : "";
 }
 
-// Dados do cliente de uma transação: o que a Mangofy guardou ou, na falta, o que veio no aviso dela.
+// Busca a transação pela referência. Usada pelo webhook quando ele não recebe o id. Só a Velani tem
+// listagem: ela não filtra por externalId, então varre a última página (100 mais recentes) e consulta a achada.
+// A Mangofy só consulta por payment_code e o aviso dela sempre o traz: devolve null.
+async function transacaoPorReferencia(reference) {
+  if (gateway() !== "velani") return null;
+  const r = await velani("/v1/transactions?page=1&limit=100");
+  const lista = r.dados && (Array.isArray(r.dados.data) ? r.dados.data : (r.dados.data && r.dados.data.items));
+  if (!r.ok || !Array.isArray(lista)) throw new Error("Velani respondeu " + r.status + " na consulta por referência");
+  const achada = lista.find((t) => t && t.externalId === reference);
+  return achada ? buscarTransacao(String(achada.id)) : null;
+}
+
+// Dados do cliente de uma transação: o que o gateway guardou ou, na falta, o que veio no aviso dela.
 function clienteDaTransacao(t, corpo) {
   const c = (t && t.customer_data && (t.customer_data.customer || t.customer_data)) || (corpo && corpo.customer) || {};
   return { nome: c.name, email: c.email, telefone: c.phone, documento: c.document };
 }
 
-// UTMs que a cobrança guardou na Mangofy (o pix.js os manda em extra.metadata ao criar).
+// UTMs que a cobrança guardou no gateway (o pix.js os manda em `tracking` / extra.metadata ao criar).
 function trackingDaTransacao(t) {
   return (t && t.customer_data && t.customer_data.tracking) || {};
 }
@@ -376,7 +455,7 @@ async function enviarPedidoUtmify({ status, reference, step, cliente, tracking, 
 
   const corpo = {
     orderId: reference,
-    platform: "Mangofy",
+    platform: gateway() === "velani" ? "Velani" : "Mangofy",
     paymentMethod: "pix",
     status,
     createdAt: dataUtmify(criadoEm),
@@ -434,7 +513,7 @@ async function enviarPedidoUtmify({ status, reference, step, cliente, tracking, 
 
 module.exports = {
   STEPS, env, soDigitos, cpfValido, telefoneValido, reais, lerCookie, queryDaPagina, lerCorpo,
-  ID_TRANSACAO, valorConfere, criarPix, buscarTransacao, urlBase, etapaDaReferencia, clienteDaTransacao, trackingDaTransacao,
+  ID_TRANSACAO, valorConfere, criarPix, buscarTransacao, urlBase, etapaDaReferencia, transacaoPorReferencia, clienteDaTransacao, trackingDaTransacao,
   eventoDeCompra, paginaDaEtapa, contextoDoNavegador, identidadeTikTok, eventoParaOPixel,
   enviarEventoTikTok, enviarPedidoUtmify,
 };
