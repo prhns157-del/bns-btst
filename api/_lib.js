@@ -11,9 +11,9 @@ process.emitWarning = function (aviso, ...resto) {
   return emitirAviso.call(this, aviso, ...resto);
 };
 
-const FLEVO_BASE = "https://pagamento-processador.org.ua/api/v1";
+// A documentação da Mangofy (Postman) usa um host de exemplo; o endereço real da API vem em MANGOFY_BASE_URL.
+const MANGOFY_BASE_PADRAO = "https://app.mangofy.com.br";
 const TIKTOK_EVENTS = "https://business-api.tiktok.com/open_api/v1.3/event/track/";
-const VELANI_BASE = "https://api.velanipagamentos.com.br/api/v1/api-gateway";
 const UTMIFY_ORDERS ="https://api.utmify.com.br/api-credentials/orders";
 
 // Preço (em centavos), nome e próxima etapa de cada passo do funil.
@@ -46,7 +46,7 @@ function soDigitos(v) {
   return String(v || "").replace(/\D/g, "");
 }
 
-// CPF/CNPJ pelo dígito verificador (a FlevoPay pede só números).
+// CPF pelo dígito verificador (o gateway recebe só números).
 function cpfValido(valor) {
   const c = soDigitos(valor);
   if (c.length !== 11 || /^(\d)\1{10}$/.test(c)) return false;
@@ -97,134 +97,108 @@ async function lerCorpo(req) {
   return {};
 }
 
-async function flevo(caminho, opcoes = {}) {
-  const chave = env("FLEVOPAY_SECRET") || env("FLEVOPAY_SECRET_KEY");
-  if (!chave) throw new Error("FLEVOPAY_SECRET (ou FLEVOPAY_SECRET_KEY) não configurada");
-  const r = await fetch(FLEVO_BASE + caminho, {
-    ...opcoes,
-    headers: { "X-API-Key": chave, "Content-Type": "application/json", ...(opcoes.headers || {}) },
-  });
-  let dados = null;
-  try { dados = await r.json(); } catch (e) { /* resposta sem JSON */ }
-  return { ok: r.ok, status: r.status, dados };
-}
-
 // ---------------------------------------------------------------------------------------------
-//  Gateway de Pix: FlevoPay (padrão) ou Velani, escolhido pela variável PIX_GATEWAY ("velani").
-//  Os endpoints só falam com as funções abaixo; a transação sai sempre no formato da FlevoPay
+//  Gateway de Pix: Mangofy (POST /api/v1/payment, GET /api/v1/payment/{payment_code}).
+//  Os endpoints só falam com as funções abaixo; a transação sai sempre no formato
 //  ({ id, external_id, status, amount, customer_data }), com status "approved" quando paga.
+//  Credenciais: MANGOFY_API_KEY (header Authorization) e MANGOFY_STORE_CODE (header Store-Code).
 // ---------------------------------------------------------------------------------------------
 
-function gateway() {
-  return env("PIX_GATEWAY").toLowerCase() === "velani" ? "velani" : "flevopay";
-}
-
-// Id de transação aceito nas rotas (a Velani usa UUID, com hífen).
+// Id de transação aceito nas rotas (o payment_code da Mangofy).
 const ID_TRANSACAO = /^[\w-]{1,64}$/;
 
-async function velani(caminho, opcoes = {}) {
-  const chave = env("VELANI_SECRET");
-  if (!chave) throw new Error("VELANI_SECRET não configurada");
-  const r = await fetch(VELANI_BASE + caminho, {
+async function mangofy(caminho, opcoes = {}) {
+  const chave = env("MANGOFY_API_KEY");
+  const loja = env("MANGOFY_STORE_CODE");
+  if (!chave) throw new Error("MANGOFY_API_KEY não configurada");
+  if (!loja) throw new Error("MANGOFY_STORE_CODE não configurada");
+  const base = (env("MANGOFY_BASE_URL") || MANGOFY_BASE_PADRAO).replace(/\/+$/, "");
+  const r = await fetch(base + caminho, {
     ...opcoes,
-    headers: { "x-api-key": chave, "Content-Type": "application/json", ...(opcoes.headers || {}) },
+    headers: {
+      Authorization: chave,   // a chave vai pura, sem "Bearer"
+      "Store-Code": loja,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      ...(opcoes.headers || {}),
+    },
   });
   let dados = null;
   try { dados = await r.json(); } catch (e) { /* resposta sem JSON */ }
   return { ok: r.ok, status: r.status, dados };
 }
 
-const STATUS_VELANI = { paid: "approved", pending: "pending", processing: "pending" };
-
-function transacaoDaVelani(d) {
-  if (!d || !d.id) return null;
+// A Mangofy só documenta pending, approved e refused; qualquer outro valor segue com o nome dela.
+function transacaoDaMangofy(d) {
+  if (!d || !d.payment_code) return null;
   const c = d.customer || {};
-  const doc = c.document && typeof c.document === "object" ? c.document.number : c.document;
   return {
-    id: String(d.id),
-    external_id: d.externalId || "",
-    status: STATUS_VELANI[d.status] || d.status,   // failed, expired e refunded seguem com o nome da Velani
-    amount: d.amount,
+    id: String(d.payment_code),
+    external_id: d.external_code || "",
+    status: d.payment_status,
+    amount: d.payment_amount,
     customer_data: {
-      customer: { name: d.customerName || c.name, email: d.customerEmail || c.email, phone: c.phone, document: doc },
-      tracking: d.tracking || {},
+      customer: { name: c.name, email: c.email, phone: c.phone, document: c.document },
+      tracking: d.metadata || {},
     },
   };
 }
 
-// A Velani devolve o valor em centavos; aceita também em reais, por garantia.
+// A Mangofy devolve o valor em centavos; aceita também em reais, por garantia.
 function valorConfere(t, centavos) {
   const v = Number(t && t.amount);
   return v === centavos || Math.round(v * 100) === centavos;
 }
 
 // Cria o Pix. Devolve { pixCode, id } ou null se o gateway recusar.
-async function criarPix({ reference, step, cliente, tracking, postbackUrl }) {
+async function criarPix({ reference, step, cliente, tracking, postbackUrl, ip }) {
   const cfg = STEPS[step];
   const t0 = Date.now();
-  let resultado = null;
-  let ruim = null;
+  const fone = soDigitos(cliente.telefone);
 
-  if (gateway() === "velani") {
-    const r = await velani("/v1/transactions", {
-      method: "POST",
-      // Sem resposta em 15 s, desiste: uma criação pendurada deixaria este CPF preso em `recentes` (pix.js).
-      signal: AbortSignal.timeout(15000),
-      headers: { "x-idempotency-key": reference },
-      body: JSON.stringify({
-        amount: cfg.amount,
-        paymentMethod: "pix",
-        description: cfg.name,
-        externalId: reference,
-        ...(postbackUrl ? { postbackUrl } : {}),
-        customer: {
-          name: cliente.nome, email: cliente.email, phone: cliente.telefone,
-          document: { type: "cpf", number: cliente.documento },
-        },
-        tracking,
-      }),
-    });
-    const d = (r.dados && r.dados.data) || {};
-    if (r.ok && d.pixQrCode && d.id) resultado = { pixCode: d.pixQrCode, id: String(d.id) };
-    else ruim = ["Velani recusou a criação:", r.status, JSON.stringify(r.dados)];
-  } else {
-    const r = await flevo("/transaction", {
-      method: "POST",
-      signal: AbortSignal.timeout(15000),
-      body: JSON.stringify({
-        amount: cfg.amount,
-        description: cfg.name,
-        reference,
-        ...(postbackUrl ? { postback_url: postbackUrl } : {}),
-        source: "api_externa",
-        customer: { name: cliente.nome, email: cliente.email, document: cliente.documento, phone: cliente.telefone },
-        tracking,
-      }),
-    });
-    const d = r.dados || {};
-    if (r.ok && d.status === "success" && d.qr_code && d.transaction_id) {
-      resultado = { pixCode: d.qr_code, id: String(d.transaction_id) };
-    } else {
-      ruim = ["FlevoPay recusou a criação:", r.status, JSON.stringify(d)];
-    }
-  }
-
-  if (!resultado) {
-    console.error(...ruim);
+  const r = await mangofy("/api/v1/payment", {
+    method: "POST",
+    // Sem resposta em 15 s, desiste: uma criação pendurada deixaria este CPF preso em `recentes` (pix.js).
+    signal: AbortSignal.timeout(15000),
+    body: JSON.stringify({
+      external_code: reference,
+      payment_method: "pix",
+      payment_format: "regular",
+      installments: 1,
+      payment_amount: cfg.amount,
+      shipping_amount: 0,
+      ...(postbackUrl ? { postback_url: postbackUrl } : {}),
+      items: [{ code: step, name: cfg.name, description: cfg.name, quantity: 1, price: cfg.amount, digital_flag: true }],
+      customer: {
+        name: cliente.nome,
+        email: cliente.email,
+        document: cliente.documento,
+        // Os exemplos da Mangofy trazem o telefone com o código do país (55).
+        phone: fone.length >= 12 && fone.startsWith("55") ? fone : "55" + fone,
+        ...(ip ? { ip } : {}),
+      },
+      // A validade é em dias (mínimo 1); o front já dá o Pix como expirado em 15 min.
+      pix: { expires_in_days: 1 },
+      // Volta no `metadata` da cobrança: é assim que o webhook e o /api/status recuperam os UTMs.
+      extra: { metadata: tracking },
+    }),
+  });
+  const d = (r.dados && (r.dados.data || r.dados.payment)) || r.dados || {};
+  const codigo = d.pix && d.pix.pix_qrcode_text;
+  if (!r.ok || !codigo || !d.payment_code) {
+    console.error("Mangofy recusou a criação:", r.status, JSON.stringify(r.dados));
     return null;
   }
-  console.log("[pix] criada", JSON.stringify({ gateway: gateway(), reference, id: resultado.id, ms: Date.now() - t0 }));
+  const resultado = { pixCode: codigo, id: String(d.payment_code) };
+  console.log("[pix] criada", JSON.stringify({ gateway: "mangofy", reference, id: resultado.id, ms: Date.now() - t0 }));
   return resultado;
 }
 
-// Consulta a transação pelo id do gateway. Devolve null se não achar ou se a consulta falhar.
+// Consulta a transação pelo payment_code. Devolve null se não achar ou se a consulta falhar.
 async function buscarTransacao(id, opcoes = {}) {
-  if (gateway() === "velani") {
-    const r = await velani("/v1/transactions/" + encodeURIComponent(id), opcoes);
-    return r.ok && r.dados ? transacaoDaVelani(r.dados.data) : null;
-  }
-  const r = await flevo("/query?action=get_transaction&id=" + encodeURIComponent(id), opcoes);
-  return r.ok && r.dados && r.dados.status ? r.dados : null;
+  const r = await mangofy("/api/v1/payment/" + encodeURIComponent(id), opcoes);
+  if (!r.ok || !r.dados) return null;
+  return transacaoDaMangofy(r.dados.data || r.dados.payment || r.dados);
 }
 
 // Endereço público do site (SITE_URL, ou o host da requisição), usado no postback_url.
@@ -241,30 +215,13 @@ function etapaDaReferencia(reference) {
   return Object.prototype.hasOwnProperty.call(STEPS, etapa) ? etapa : "";
 }
 
-// Busca a transação pela referência, direto na FlevoPay. Usada pelo webhook quando ele não recebe o id.
-// Uma referência pode ter mais de uma linha lá (cobranças duplicadas antigas): vale a aprovada.
-async function transacaoPorReferencia(reference) {
-  if (gateway() === "velani") {
-    // A Velani não filtra por externalId: varre a última página (100 mais recentes) e consulta a achada.
-    const r = await velani("/v1/transactions?page=1&limit=100");
-    const lista = r.dados && (Array.isArray(r.dados.data) ? r.dados.data : (r.dados.data && r.dados.data.items));
-    if (!r.ok || !Array.isArray(lista)) throw new Error("Velani respondeu " + r.status + " na consulta por referência");
-    const achada = lista.find((t) => t && t.externalId === reference);
-    return achada ? buscarTransacao(String(achada.id)) : null;
-  }
-  const r = await flevo("/query?action=list_transactions&external_id=" + encodeURIComponent(reference));
-  if (!r.ok || !Array.isArray(r.dados)) throw new Error("FlevoPay respondeu " + r.status + " na consulta por referência");
-  const mesmas = r.dados.filter((t) => t && t.external_id === reference);
-  return mesmas.find((t) => t.status === "approved") || mesmas[0] || null;
-}
-
-// Dados do cliente de uma transação: o que a FlevoPay guardou ou, na falta, o que veio no aviso dela.
+// Dados do cliente de uma transação: o que a Mangofy guardou ou, na falta, o que veio no aviso dela.
 function clienteDaTransacao(t, corpo) {
   const c = (t && t.customer_data && (t.customer_data.customer || t.customer_data)) || (corpo && corpo.customer) || {};
   return { nome: c.name, email: c.email, telefone: c.phone, documento: c.document };
 }
 
-// UTMs que a cobrança guardou na FlevoPay (o pix.js os grava em `tracking` ao criar).
+// UTMs que a cobrança guardou na Mangofy (o pix.js os manda em extra.metadata ao criar).
 function trackingDaTransacao(t) {
   return (t && t.customer_data && t.customer_data.tracking) || {};
 }
@@ -419,7 +376,7 @@ async function enviarPedidoUtmify({ status, reference, step, cliente, tracking, 
 
   const corpo = {
     orderId: reference,
-    platform: "FlevoPay",
+    platform: "Mangofy",
     paymentMethod: "pix",
     status,
     createdAt: dataUtmify(criadoEm),
@@ -476,8 +433,8 @@ async function enviarPedidoUtmify({ status, reference, step, cliente, tracking, 
 }
 
 module.exports = {
-  STEPS, env, soDigitos, cpfValido, telefoneValido, reais, lerCookie, queryDaPagina, lerCorpo, flevo,
-  ID_TRANSACAO, valorConfere, criarPix, buscarTransacao, urlBase, etapaDaReferencia, transacaoPorReferencia, clienteDaTransacao, trackingDaTransacao,
+  STEPS, env, soDigitos, cpfValido, telefoneValido, reais, lerCookie, queryDaPagina, lerCorpo,
+  ID_TRANSACAO, valorConfere, criarPix, buscarTransacao, urlBase, etapaDaReferencia, clienteDaTransacao, trackingDaTransacao,
   eventoDeCompra, paginaDaEtapa, contextoDoNavegador, identidadeTikTok, eventoParaOPixel,
   enviarEventoTikTok, enviarPedidoUtmify,
 };

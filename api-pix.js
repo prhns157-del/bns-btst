@@ -1,4 +1,4 @@
-// Ponte Pix: navegador -> /api/pix e /api/status (Vercel) -> FlevoPay. Credencial somente no servidor.
+// Ponte Pix: navegador -> /api/pix e /api/status (Vercel) -> Mangofy. Credencial somente no servidor.
 (function () {
   "use strict";
 

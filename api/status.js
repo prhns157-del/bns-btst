@@ -1,5 +1,5 @@
 // GET /api/status?f=<etapa>&code=<transaction_id>
-// Consulta a FlevoPay. Quando o Pix aparece como aprovado, dispara a compra na Events API do TikTok
+// Consulta a Mangofy. Quando o Pix aparece como aprovado, dispara a compra na Events API do TikTok
 // com o clique e o navegador desta requisição, e devolve o mesmo evento para a página disparar pelo pixel.
 const {
   STEPS, ID_TRANSACAO, valorConfere, queryDaPagina, buscarTransacao, clienteDaTransacao, contextoDoNavegador, eventoDeCompra, eventoParaOPixel,

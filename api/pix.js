@@ -1,5 +1,5 @@
 // POST /api/pix?f=<etapa>   (etapa: front, back, up1 ... up10)
-// Cria a cobrança Pix na FlevoPay. O valor vem da tabela STEPS (_lib.js), nunca do navegador.
+// Cria a cobrança Pix na Mangofy. O valor vem da tabela STEPS (_lib.js), nunca do navegador.
 const crypto = require("crypto");
 const {
   STEPS, soDigitos, cpfValido, telefoneValido, reais, queryDaPagina, lerCorpo, criarPix, urlBase,
@@ -7,7 +7,7 @@ const {
 } = require("./_lib");
 
 // Mesma etapa + mesmo CPF dentro da validade do Pix devolve o Pix que ja existe, em vez de abrir outra
-// cobranca na FlevoPay (cliques repetidos, "tentar de novo", varias abas). Fica na memoria da instancia:
+// cobranca na Mangofy (cliques repetidos, "tentar de novo", varias abas). Fica na memoria da instancia:
 // protege as chamadas em sequencia; o front tambem reaproveita o Pix (api-pix.js).
 const VALIDADE_MS = 15 * 60 * 1000;
 const recentes = new Map();   // "etapa:cpf" -> { inicio, promessa }
@@ -46,10 +46,8 @@ module.exports = async function handler(req, res) {
   // O prefixo da referência é a etapa: o /api/status confere isso antes de aceitar uma consulta.
   const reference = `${step}-${Date.now()}-${crypto.randomBytes(3).toString("hex")}`;
 
-  // URL do webhook simples, sem parâmetro nenhum, como no back end que já funciona. NÃO acrescentar
-  // dados aqui: a FlevoPay registra 8 ou 9 cobranças no lugar de uma quando o postback_url passa de
-  // 255 caracteres (medido: com 255 gera 1, com 256 gera 9). Era isso que duplicava as cobranças
-  // quando a URL levava token, IP e navegador.
+  // URL do webhook simples, sem parâmetro nenhum. Não acrescentar dados aqui: o webhook confere tudo
+  // na API da Mangofy pelo payment_code, e uma URL longa já causou cobranças duplicadas em outro gateway.
   const base = urlBase(req);
   const postbackUrl = base ? base + "/api/webhook" : "";
 
@@ -60,7 +58,7 @@ module.exports = async function handler(req, res) {
 
   async function criarCobranca() {
     const pix = await criarPix({
-      reference, step, tracking, postbackUrl,
+      reference, step, tracking, postbackUrl, ip: contexto.ip,
       cliente: { nome, email, documento: cpf, telefone },
     });
     if (!pix) return null;
